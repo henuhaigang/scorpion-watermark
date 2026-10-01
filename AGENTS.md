@@ -8,7 +8,7 @@ Tauri v2 + Rust 后端 + React/TypeScript 前端。
 ## 授权
 PolyForm Noncommercial License 1.0.0（见 LICENSE）：可自由使用/复制/修改/分发，禁止商用。
 注意这是 **source-available（源码可见）而非开源** —— OSI 定义要求开源许可必然允许商用。
-**分发前必须换开源字体**，当前字体源自 Apple Heiti SC（专有授权）。
+字体为 Noto Sans SC 子集（SIL OFL 1.1），**允许自由分发**，不构成分发障碍。
 
 ## 文档导航
 - `README.md` —— 功能现状、使用说明、排版规则、已知限制
@@ -47,14 +47,16 @@ PolyForm Noncommercial License 1.0.0（见 LICENSE）：可自由使用/复制/�
 - 重新生成子集：`python3 scripts/build_font.py <源字体> [--index N]`
   - TTC 字体集合必须用 `--index` 指定字面
   - 字集 = GB2312 + ASCII + CJK 标点 + 全角，可用 `--include-range` 扩充
-- **当前字体源自 Apple Heiti SC（专有授权），仅适合自用。**
-  分发前必须换成开源字体（Noto Sans SC / 思源黑体，OFL 协议）：
-  下载字体文件后执行 `python3 scripts/build_font.py <NotoSansSC-Regular.otf>` 即可，代码零改动
+- 当前字体 **Noto Sans SC（SIL OFL 1.1，可自由分发）**，已随仓库提交
+- 换任何开源字体：下载后执行 `python3 scripts/build_font.py <源字体>` 即可，代码零改动
+- 项目禁止网络请求，**不要自动下载字体**，让用户提供文件
 - 字体是裁剪过的子集，生僻字可能缺失；`calculate_layout` 会返回 `missing_glyphs` 供前端提示
 
 ## 排版规则（core/font.rs 常量）
 - `MAX_LINE_WIDTH_RATIO` 0.35：单行文字最长占画布宽度
 - `COMFORTABLE_FONT_RATIO` 0.02：字号低于此值就改用多行，避免水印小到看不见
+- 字号一律经 `font.rs` 的 `scale_for()` 转换：`PxScale` 是行框高度，而界面字号是 em 字号，
+  两者对多数中文字体并不相等（Noto Sans SC 行框是 1448/1000），直接 `PxScale::from()` 会偏小 30%
 - `MIN_FONT_RATIO` 0.015：字号绝对下限
 - `MAX_LINES` 3：最多行数
 - `BLOCK_GAP_RATIO` 必须明显大于块内行距，否则相邻块的文字比同一块的行更密，看起来像被截断

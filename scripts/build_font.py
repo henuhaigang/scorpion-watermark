@@ -4,11 +4,13 @@
 用法:
     python3 scripts/build_font.py <源字体路径> [--index N] [--family NAME]
 
-示例（当前使用的 Apple Heiti SC，简体）:
-    python3 scripts/build_font.py src-tauri/assets/fonts/NotoSansCJKsc-Regular.otf --index 1
+当前仓库使用的字体（Noto Sans SC，SIL OFL 1.1，可自由分发）:
+    python3 scripts/build_font.py NotoSansSC-Regular.otf
 
-示例（换用开源 Noto Sans SC，OFL 协议，可自由分发）:
-    python3 scripts/build_font.py ~/Downloads/NotoSansSC-Regular.otf --family "Scorpion Watermark SC"
+换成别的开源字体:
+    python3 scripts/build_font.py /path/to/SourceHanSansSC-Regular.otf
+
+含多个字面的 TTC 字体集合必须用 --index 指定字面序号。
 
 设计要点:
   * 输出字体被重命名为固定别名（默认 "Scorpion Watermark SC"）。

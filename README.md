@@ -4,21 +4,14 @@ macOS 桌面水印工具。为图片添加可见文字水印（斜向平铺）�
 
 **完全本地离线处理，不发起任何网络请求。**
 
-> ## 🚫 分发前必读
+> ## 水印字体
 >
-> **仓库内的字体文件不可随本软件分发。**
+> 内置字体为 **Noto Sans SC** 裁剪子集，**SIL Open Font License 1.1**，
+> 允许自由使用、修改与再分发，**可随本软件一同分发**。
 >
-> `WatermarkSC-Regular.ttf` 裁剪自 **Apple Heiti SC**，属 Apple 专有授权。
-> 自用没问题，但**任何形式的分发**（代码、构建产物、安装包、fork、二进制）
-> 都必须**先自行替换成开源字体**，否则会侵犯 Apple 的字体版权。
+> 仓库已包含该子集，克隆后无需任何额外步骤即可编译运行。
 >
-> 替换只需一条命令，零代码改动：
->
-> ```bash
-> python3 scripts/build_font.py /path/to/你的开源中文字体.ttf
-> ```
->
-> 详见下方 [「字体不可随本项目分发」](#-字体不可随本项目分发使用者必须自行替换)。
+> 想换成别的字体见下方「水印字体」章节，**零代码改动**。
 
 ---
 
@@ -34,41 +27,27 @@ macOS 桌面水印工具。为图片添加可见文字水印（斜向平铺）�
 
 依赖的第三方 crate / npm 包各自保留其原有开源许可证（MIT、Apache-2.0 等）。
 
-### 🚫 字体不可随本项目分发，使用者必须自行替换
+### ✅ 字体可自由分发
 
-**仓库内的 `WatermarkSC-Regular.ttf` 裁剪自 Apple Heiti SC，属 Apple 专有授权，
-不随本项目授权给任何人。**
+内置的 `WatermarkSC-Regular.ttf` 是从 **Noto Sans SC** 裁剪出的子集。
 
-| 你要做的事 | 字体能否使用 |
+| 项目 | 内容 |
 |---|---|
-| 自己编译、纯自用 | ✅ 可以 |
-| 分享给别人（无论收费与否） | ❌ **不可以，必须先替换** |
+| 字体 | Noto Sans SC（思源黑体系列的 Google 版） |
+| 版权 | © 2014-2021 Adobe |
+| 授权 | **SIL Open Font License 1.1** —— 允许自由使用、修改、再分发与商业使用 |
+| 字形数 | 约 7700（GB2312 全集 + ASCII + CJK 标点 + 全角） |
+| 体积 | 约 1.9 MB |
 
-Apple 的字体版权与本项目的非商用协议**无关且独立**。本协议允许你自由分发软件代码，
-但只要分发包中含有该字形，Apple 就有权主张侵权 —— 风险点是**任何形式的分发**，
-不是是否收费。
+OFL 1.1 允许字体随软件一同分发，**因此本仓库的字体不构成分发障碍**，
+克隆后即可直接编译运行，无需任何额外步骤。
 
-**因此：任何要分发本软件（含代码、构建产物、安装包、fork、二进制）的人，
-都必须先自行替换成开源字体。**
-
-替换方式（**零代码改动**）：
+想换成别的开源字体（思源黑体 Source Han Sans、阿里巴巴普惠体等），
+执行下面一条命令即可，**零代码改动**：
 
 ```bash
-# 1. 准备一个开源中文字体（Noto Sans SC / 思源黑体，OFL 协议，允许打包分发）
-#    本项目禁止网络请求，请自行下载后放到本地
-
-# 2. 一条命令完成：裁剪子集 + 重命名 + 同时写入前后端 + 校验一致性
-python3 scripts/build_font.py /path/to/NotoSansSC-Regular.otf
+python3 scripts/build_font.py /path/to/你的开源中文字体.otf
 ```
-
-完成后 `src-tauri/assets/fonts/WatermarkSC-Regular.ttf` 与
-`public/fonts/WatermarkSC-Regular.ttf` 都会被替换为你的字体，
-运行 `cargo test --lib font::` 确认 `test_backend_and_frontend_font_identical` 通过即可。
-详见下文「水印字体」。
-
-> 上游仓库保留该字体仅为方便个人自用。若你打算分发，请一并移除或替换。
-
----
 
 ## 功能
 
@@ -95,24 +74,11 @@ python3 scripts/build_font.py /path/to/NotoSansSC-Regular.otf
 
 需要 macOS 11.0+，以及 [Rust](https://rustup.rs/) 与 [Node.js](https://nodejs.org/)。
 
-> **克隆后第一步：生成水印字体。**
-> 仓库不包含字体文件（原因见顶部「分发前必读」），必须先用一个你有使用权的
-> 中文字体生成子集，否则后端 `include_bytes!` 会编译失败。
->
-> ```bash
-> git clone git@github.com:henuhaigang/scorpion-watermark.git
-> cd scorpion-watermark
->
-> # 用开源字体（Noto Sans SC / 思源黑体，OFL 协议）生成，可自由分发
-> python3 scripts/build_font.py /path/to/NotoSansSC-Regular.otf
-> ```
->
-> 生成后校验前后端两份文件一致：
-> `cd src-tauri && cargo test --lib font::`
-
-然后：
+水印字体已随仓库提供（OFL 许可），**无需额外下载**。
 
 ```bash
+git clone git@github.com:henuhaigang/scorpion-watermark.git
+cd scorpion-watermark
 npm install
 npm run tauri dev
 ```
@@ -167,7 +133,7 @@ python3 scripts/build_font.py /path/to/NotoSansSC-Regular.otf
 python3 scripts/build_font.py NotoSansSC-Regular.otf --include-range 0x3400-0x4DBF
 ```
 
-TTC 字体集合（含多个字面）必须用 `--index` 指定，例如原始文件里 `--index 0` 是繁体 Heiti TC、`--index 1` 是简体 Heiti SC。
+TTC 字体集合（含多个字面，如 macOS 系统字体）必须用 `--index` 指定字面序号，否则脚本会报错提示。
 
 ### 缺失字形提示
 

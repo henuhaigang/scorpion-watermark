@@ -1,6 +1,6 @@
 use crate::core::config::VisibleWatermark;
 use crate::core::font::{
-    font, measure_text_width, missing_glyphs, BLOCK_GAP_RATIO, COMFORTABLE_FONT_RATIO,
+    font, measure_text_width, missing_glyphs, scale_for, BLOCK_GAP_RATIO, COMFORTABLE_FONT_RATIO,
     LINE_HEIGHT_RATIO, MAX_FONT_RATIO, MAX_LINES, MAX_LINE_WIDTH_RATIO, MIN_FONT_RATIO,
 };
 use ab_glyph::{FontRef, PxScale};
@@ -71,7 +71,7 @@ pub fn calculate_layout(
 
     let font_auto_shrunk = font_size < ratio_font - 0.5;
 
-    let scale = PxScale::from(font_size);
+    let scale = scale_for(font, font_size);
     let lines = wrap_text(font, scale, &config.text, max_line_width, target_lines);
 
     let line_height = font_size * LINE_HEIGHT_RATIO * line_spacing;
@@ -142,8 +142,10 @@ pub fn calculate_layout(
 /// 决定最终的行数与字号。
 ///
 /// 优先级：
-/// 1. 全文在设定字号下能单行放下 → 就用单行（哪怕设定字号本身偏小，也不换行）
-/// 2. 否则逐个增加行数，取**行数最少且字号不低于可读阈值**的方案
+/// 1. 全文在**用户设定的字号**下能单行放下 → 单行。
+///    （这是用户自己的选择，即使该字号偏小也尊重，不擅自换行）
+/// 2. 否则逐个增加行数，取**行数最少且字号不低于可读阈值**的方案，
+///    即宁可换行也要换取更大的字号，避免水印小到看不见。
 /// 3. 兜底：保持用户设定的字号，取能放下全文的最少行数
 ///
 /// 文字永远完整显示，任何情况下都不截断。
@@ -160,13 +162,12 @@ fn choose_font_and_lines(
         (max_line_width / per_line.max(1.0)).clamp(min_font, ratio_font)
     };
 
-    // 1) 单行放得下就用单行
-    let single = font_for(1);
-    if fits_in_lines(font, text, single, 1, max_line_width) {
-        return (single, 1);
+    // 1) 设定字号下就能单行放下 —— 不缩小，直接单行
+    if fits_in_lines(font, text, ratio_font, 1, max_line_width) {
+        return (ratio_font, 1);
     }
 
-    // 2) 行数尽量少，同时保证字号可读
+    // 2) 需要缩小才能单行：若缩到可读阈值以下就改用多行换更大字号
     for lines in 2..=MAX_LINES {
         let f = font_for(lines);
         if f >= comfortable_font && fits_in_lines(font, text, f, lines, max_line_width) {
@@ -204,7 +205,7 @@ fn fits_in_lines(
     lines: usize,
     max_line_width: f32,
 ) -> bool {
-    let scale = PxScale::from(font_size);
+    let scale = scale_for(font, font_size);
     text.split('\n').all(|segment| {
         let chars: Vec<char> = segment.chars().collect();
         split_evenly(&chars, lines)

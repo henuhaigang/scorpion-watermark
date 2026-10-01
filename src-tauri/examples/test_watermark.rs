@@ -7,7 +7,7 @@ fn main() {
 
     let config = VisibleWatermark {
         enabled: true,
-        text: "仅供用来办理车险使用".to_string(),
+        text: "仅供办理人保车险使用的时候".to_string(),
         mode: TileMode::Tile,
         angle: -45.0,
         opacity: 0.5,

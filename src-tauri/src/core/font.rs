@@ -60,6 +60,20 @@ pub fn measure_text_width(font: &FontRef, scale: PxScale, text: &str) -> f32 {
     }
 }
 
+/// 把「字号（em 像素）」转换成 ab_glyph 的 `PxScale`。
+///
+/// ab_glyph 把 `PxScale` 定义为**字体行框高度**（`ascent - descent`）对应的像素数，
+/// 而界面上的「字号」以及 CSS `font-size` 指的是 **em 字号**。多数中文字体的行框
+/// 明显大于 em 框（Noto Sans SC 是 1448/1000，Apple Heiti SC 是 1000/1000），
+/// 所以不能直接用 `PxScale::from(font_size)`——那会让实际字形比预期小 30% 左右，
+/// 并且与前端 Konva 用 CSS 字号渲染的结果对不上。
+///
+/// 统一走这个函数，保证「字号」在任意字体下的含义一致，也保证预览与导出一致。
+pub fn scale_for(font: &FontRef, font_size: f32) -> PxScale {
+    let units_per_em = font.units_per_em().unwrap_or(1000.0);
+    PxScale::from(font_size * font.height_unscaled() / units_per_em)
+}
+
 /// 字体子集里缺失的字符。
 ///
 /// 字库是裁剪过的（见 `scripts/build_font.py`），GB2312 之外的生僻字可能

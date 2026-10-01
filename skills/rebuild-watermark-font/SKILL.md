@@ -31,9 +31,8 @@ description: 重建或替换水印字体子集。当需要更换字体（尤其�
 # 1. 从任意源字体生成子集，同时写入前后端两处
 python3 scripts/build_font.py /path/to/NotoSansSC-Regular.otf
 
-# 2. TTC 字体集合必须指定字面序号
-python3 scripts/build_font.py src-tauri/assets/fonts/NotoSansCJKsc-Regular.otf --index 1
-#    原始文件：--index 0 = Heiti TC（繁体），--index 1 = Heiti SC（简体）
+# 2. TTC 字体集合（含多个字面）必须指定 --index，否则脚本报错
+python3 scripts/build_font.py /path/to/some.ttc --index 1
 
 # 3. 需要更完整字集时扩充码位区间（可重复）
 python3 scripts/build_font.py NotoSansSC-Regular.otf --include-range 0x3400-0x4DBF
@@ -65,8 +64,8 @@ cd src-tauri && cargo test --lib font::
 
 ### 授权
 
-- 当前字体源自 **Apple Heiti SC，专有授权**，仅适合自用，分发即可能侵权
-- 分发前必须换成开源字体：**Noto Sans SC / 思源黑体（OFL 协议）**
+- 当前字体 **Noto Sans SC（SIL OFL 1.1）**，允许自由分发，已随仓库提交
+- 换其他字体时同样应选 OFL 协议（思源黑体、阿里巴巴普惠体等）
 - 项目规则禁止网络请求，所以**不要自动下载字体**，让用户提供文件
 
 ## 字集说明

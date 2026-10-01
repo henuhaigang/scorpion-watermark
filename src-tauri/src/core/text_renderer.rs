@@ -1,5 +1,5 @@
-use crate::core::font::{font, LINE_HEIGHT_RATIO};
-use ab_glyph::PxScale;
+use crate::core::font::{font, scale_for, LINE_HEIGHT_RATIO};
+
 use image::{DynamicImage, Rgba, RgbaImage};
 use imageproc::drawing::{draw_text_mut, text_size};
 
@@ -17,7 +17,7 @@ pub struct RenderParams<'a> {
 
 pub fn render_text(image: &mut DynamicImage, params: &RenderParams) -> Result<(), String> {
     let font = font()?;
-    let scale = PxScale::from(params.font_size);
+    let scale = scale_for(font, params.font_size);
 
     let lines: Vec<&str> = params.text.split('\n').collect();
     if lines.is_empty() {

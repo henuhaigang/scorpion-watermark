@@ -128,22 +128,46 @@ mod tests {
     }
 
     #[test]
-    fn test_layout_prefers_single_line_when_readable() {
-        // 9~13 个字在默认比例下应保持单行，避免看起来像被截断
-        for text in ["仅用来办理车险使用", "仅供办理人保车险使用的时候"] {
-            let config = test_config(text);
-            let layout = calculate_layout(1200, 900, &config).unwrap();
-            println!(
-                "text={} lines={} font={:.1} shrink={}",
-                text,
-                layout.lines.len(),
-                layout.font_size,
-                layout.font_auto_shrunk
-            );
-            assert_eq!(layout.lines.len(), 1, "可读字号下单行更合适: {}", text);
-            let joined: String = layout.lines.concat();
-            assert_eq!(joined, text, "文字不应被截断");
-        }
+    fn test_layout_prefers_single_line_when_it_fits_at_ratio_font() {
+        // 9 个字在默认比例下 9×36=324px ≤ 420px 上限，应保持单行
+        let text = "仅用来办理车险使用";
+        let config = test_config(text);
+        let layout = calculate_layout(1200, 900, &config).unwrap();
+        println!(
+            "text={} lines={} font={:.1} shrink={}",
+            text,
+            layout.lines.len(),
+            layout.font_size,
+            layout.font_auto_shrunk
+        );
+        assert_eq!(layout.lines.len(), 1, "设定字号下放得下就该单行");
+        assert!(!layout.font_auto_shrunk, "不应缩小字号");
+        let joined: String = layout.lines.concat();
+        assert_eq!(joined, text, "文字不应被截断");
+    }
+
+    #[test]
+    fn test_layout_wraps_without_shrinking_when_font_is_readable() {
+        // 13 个字 13×36=468px > 420px 单行上限。
+        // 应换行，但**保持用户设定的字号**，而不是缩到很小硬塞进一行。
+        let text = "仅供办理人保车险使用的时候";
+        let config = test_config(text);
+        let layout = calculate_layout(1200, 900, &config).unwrap();
+        println!(
+            "text={} lines={:?} font={:.1} shrink={}",
+            text,
+            layout.lines,
+            layout.font_size,
+            layout.font_auto_shrunk
+        );
+        assert_eq!(layout.lines.len(), 2, "单行放不下应换行");
+        assert!(
+            layout.font_size >= 1200.0 * 0.02,
+            "换行时字号不应低于可读阈值，实际 {:.1}",
+            layout.font_size
+        );
+        let joined: String = layout.lines.concat();
+        assert_eq!(joined, text, "文字不应被截断");
     }
 
     #[test]
