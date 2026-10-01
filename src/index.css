@@ -1,0 +1,32 @@
+/* 与后端 core/font.rs 使用同一份字体文件，保证预览与导出的字形完全一致 */
+@font-face {
+  font-family: 'Scorpion Watermark SC';
+  src: url('/fonts/WatermarkSC-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+:root {
+  font-family: 'Scorpion Watermark SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+  color: #213547;
+  background-color: #ffffff;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+}

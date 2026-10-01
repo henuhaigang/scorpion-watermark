@@ -1,0 +1,17 @@
+node_modules
+dist
+src-tauri/target
+.DS_Store
+*.log
+tsconfig.tsbuildinfo
+
+# ── 水印字体：禁止提交 ──────────────────────────────
+# WatermarkSC-Regular.ttf 裁剪自 Apple Heiti SC，属 Apple 专有授权。
+# 推送到公开仓库即构成侵权，因此不随仓库分发。
+# 克隆后请按 README「安装与运行」用开源字体重新生成。
+src-tauri/assets/fonts/WatermarkSC-Regular.ttf
+public/fonts/WatermarkSC-Regular.ttf
+
+# NotoSansCJKsc-Regular.otf 是 53MB 的 TTC 原始字体集合，含繁体/简体两个字面，
+# 代码已不再引用（改用上面裁剪后的子集）。体积大且属专有授权，不提交。
+src-tauri/assets/fonts/NotoSansCJKsc-Regular.otf

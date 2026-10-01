@@ -1,0 +1,310 @@
+# Scorpion Watermark 蝎子水印
+
+macOS 桌面水印工具。为图片添加可见文字水印（斜向平铺）与隐形水印，导出时自动剥离 EXIF/GPS 等隐私元数据。
+
+**完全本地离线处理，不发起任何网络请求。**
+
+> ## 🚫 分发前必读
+>
+> **仓库内的字体文件不可随本软件分发。**
+>
+> `WatermarkSC-Regular.ttf` 裁剪自 **Apple Heiti SC**，属 Apple 专有授权。
+> 自用没问题，但**任何形式的分发**（代码、构建产物、安装包、fork、二进制）
+> 都必须**先自行替换成开源字体**，否则会侵犯 Apple 的字体版权。
+>
+> 替换只需一条命令，零代码改动：
+>
+> ```bash
+> python3 scripts/build_font.py /path/to/你的开源中文字体.ttf
+> ```
+>
+> 详见下方 [「字体不可随本项目分发」](#-字体不可随本项目分发使用者必须自行替换)。
+
+---
+
+## 授权
+
+本项目采用 [PolyForm Noncommercial License 1.0.0](LICENSE)（源码可见，非商用）。
+
+- ✅ 任何人可以自由使用、复制、修改、创建衍生作品
+- ✅ 任何人可以自由分发本软件的副本
+- ❌ 不得用于任何商业目的
+
+> **关于「开源」的准确说法**：按 OSI（开源促进会）的定义，允许商业使用是开源许可证的必要条件之一。因此本许可证**不属于严格意义上的开源许可证**，而是 *source-available（源码可见）*。使用 `source-available` / `非商用` 描述比 `开源` 更准确。
+
+依赖的第三方 crate / npm 包各自保留其原有开源许可证（MIT、Apache-2.0 等）。
+
+### 🚫 字体不可随本项目分发，使用者必须自行替换
+
+**仓库内的 `WatermarkSC-Regular.ttf` 裁剪自 Apple Heiti SC，属 Apple 专有授权，
+不随本项目授权给任何人。**
+
+| 你要做的事 | 字体能否使用 |
+|---|---|
+| 自己编译、纯自用 | ✅ 可以 |
+| 分享给别人（无论收费与否） | ❌ **不可以，必须先替换** |
+
+Apple 的字体版权与本项目的非商用协议**无关且独立**。本协议允许你自由分发软件代码，
+但只要分发包中含有该字形，Apple 就有权主张侵权 —— 风险点是**任何形式的分发**，
+不是是否收费。
+
+**因此：任何要分发本软件（含代码、构建产物、安装包、fork、二进制）的人，
+都必须先自行替换成开源字体。**
+
+替换方式（**零代码改动**）：
+
+```bash
+# 1. 准备一个开源中文字体（Noto Sans SC / 思源黑体，OFL 协议，允许打包分发）
+#    本项目禁止网络请求，请自行下载后放到本地
+
+# 2. 一条命令完成：裁剪子集 + 重命名 + 同时写入前后端 + 校验一致性
+python3 scripts/build_font.py /path/to/NotoSansSC-Regular.otf
+```
+
+完成后 `src-tauri/assets/fonts/WatermarkSC-Regular.ttf` 与
+`public/fonts/WatermarkSC-Regular.ttf` 都会被替换为你的字体，
+运行 `cargo test --lib font::` 确认 `test_backend_and_frontend_font_identical` 通过即可。
+详见下文「水印字体」。
+
+> 上游仓库保留该字体仅为方便个人自用。若你打算分发，请一并移除或替换。
+
+---
+
+## 功能
+
+| 功能 | 状态 | 说明 |
+|---|---|---|
+| 可见文字水印（斜向平铺） | ✅ 可用 | 实时预览、导出全分辨率渲染 |
+| 长文本自动折行 | ✅ 可用 | 单行优先，放不下时自动缩字号，仍放不下才折行 |
+| 自动剥离元数据 | ✅ 可用 | 输出不含 EXIF/GPS/IPTC/XMP |
+| 预设模板保存/加载/删除 | ✅ 可用 | 参数以 JSON 持久化 |
+| JPG / PNG / WebP / GIF | ✅ 可用 | |
+| HEIC | ⚠️ 仅 macOS | 走系统 ImageIO，其他平台会明确报错 |
+| 单点模式 + 九宫格定位 | ⚠️ 部分可用 | UI 只有「居中」，其余位置与自定义坐标未接入 |
+| 透明 PNG 导出为 JPEG | ✅ 可用 | 自动合成到不透明底图 |
+| 隐形水印（嵌入） | ⚠️ 实验性 | 能嵌入，但**无法提取**，见「已知限制」 |
+| 隐形水印（提取） | ❌ 未实现 | 会返回明确错误，不会崩溃 |
+| PDF 水印 | ❌ 存在严重缺陷 | 会**覆盖原页面内容**，见「已知限制」 |
+| 描边 / 阴影 | ❌ 未实现 | 配置结构里有字段，但渲染未实现 |
+
+---
+
+## 使用说明
+
+### 安装与运行
+
+需要 macOS 11.0+，以及 [Rust](https://rustup.rs/) 与 [Node.js](https://nodejs.org/)。
+
+> **克隆后第一步：生成水印字体。**
+> 仓库不包含字体文件（原因见顶部「分发前必读」），必须先用一个你有使用权的
+> 中文字体生成子集，否则后端 `include_bytes!` 会编译失败。
+>
+> ```bash
+> git clone git@github.com:henuhaigang/scorpion-watermark.git
+> cd scorpion-watermark
+>
+> # 用开源字体（Noto Sans SC / 思源黑体，OFL 协议）生成，可自由分发
+> python3 scripts/build_font.py /path/to/NotoSansSC-Regular.otf
+> ```
+>
+> 生成后校验前后端两份文件一致：
+> `cd src-tauri && cargo test --lib font::`
+
+然后：
+
+```bash
+npm install
+npm run tauri dev
+```
+
+### 基本流程
+
+1. **拖入或点击选择文件**（支持 JPG / PNG / WebP / GIF / HEIC）
+2. 在右侧面板填写水印文字，调整角度、透明度、字号比例、颜色
+3. 画布实时显示预览效果
+4. 选择输出格式，点击**导出**，指定保存位置
+5. 导出会另存为新文件，**永不覆盖原图**
+
+### 界面说明
+
+- **预设栏**（顶部）：保存当前参数组合、一键复用。加载旧预设时超出范围的参数会被自动钳位
+- **可见水印**：启用开关、文字、模式（平铺/单点）、角度、透明度、字号比例、行间距、颜色
+- **隐形水印**：载荷与密钥。设置后导出时自动嵌入
+- **输出**：格式（与原图相同 / JPEG / PNG / HEIC）、去元数据开关、导出按钮
+
+---
+
+## 水印字体
+
+> 🚫 仓库内字体的**分发限制**见上方
+> [「字体不可随本项目分发」](#-字体不可随本项目分发使用者必须自行替换)。要分发请先替换。
+
+### 前后端必须使用同一个字体文件
+
+否则预览与导出的字形会不一致。
+
+| 位置 | 路径 | 用途 |
+|---|---|---|
+| 后端 | `src-tauri/assets/fonts/WatermarkSC-Regular.ttf` | `include_bytes!` 编译进二进制 |
+| 前端 | `public/fonts/WatermarkSC-Regular.ttf` | `@font-face` |
+
+有测试 `test_backend_and_frontend_font_identical` 校验两份文件**字节完全相同**。
+
+### 为什么换字体不用改代码
+
+`src/index.css` 里的族名 `Scorpion Watermark SC` 是**我们自己起的别名**，通过 `@font-face` 绑定到具体文件，与字体内部叫什么名字无关。所以：
+
+```bash
+# 换成任意开源字体，只需替换文件
+python3 scripts/build_font.py /path/to/NotoSansSC-Regular.otf
+```
+
+脚本会：裁剪字集 → 重命名为固定别名 → **同时写入前后端两个路径** → 校验字节一致 → 校验常用文案字形齐全。
+
+字集 = GB2312 全部汉字 + ASCII + CJK 标点 + 全角 + 常用补充字（约 7700 字形，6.2MB）。需要更完整可扩充：
+
+```bash
+python3 scripts/build_font.py NotoSansSC-Regular.otf --include-range 0x3400-0x4DBF
+```
+
+TTC 字体集合（含多个字面）必须用 `--index` 指定，例如原始文件里 `--index 0` 是繁体 Heiti TC、`--index 1` 是简体 Heiti SC。
+
+### 缺失字形提示
+
+字体是裁剪过的子集，生僻字可能不在其中。`calculate_layout` 会返回 `missing_glyphs`，预览区以红色提示：
+
+> 字体缺少这些字符，将显示为方块或回退字体：𠀀
+
+缺字形时后端画成豆腐块、前端逐字回退系统字体，两边表现不一致，所以必须提示。
+
+---
+
+## 排版规则
+
+排版逻辑集中在 `src-tauri/src/core/font.rs` 的常量与 `core/layout.rs`：
+
+| 常量 | 值 | 含义 |
+|---|---|---|
+| `MAX_LINE_WIDTH_RATIO` | `0.35` | 单行文字最长占画布宽度 |
+| `COMFORTABLE_FONT_RATIO` | `0.02` | 字号低于此值就改用多行，避免水印小到看不见 |
+| `MIN_FONT_RATIO` | `0.015` | 字号绝对下限 |
+| `MAX_FONT_RATIO` | `0.08` | 字号上限 |
+| `MAX_LINES` | `3` | 最多行数 |
+| `LINE_HEIGHT_RATIO` | `1.3` | 行高相对字号的倍数 |
+| `BLOCK_GAP_RATIO` | `2.0` | 文字块之间的间隙相对字号的倍数 |
+
+### 行数与字号的选择顺序
+
+1. 设定字号下**单行放得下 → 单行**，哪怕设定字号偏小也不折行
+2. 否则逐行增加，取**行数最少且字号 ≥ 2% 画布宽**的方案
+3. 兜底：维持设定字号，取能放下全文的最少行数
+
+实测行为（画布宽 1200px）：
+
+| 字数 | 字号比例 3.0 | 字号比例 5.0 |
+|---|---|---|
+| 2 ~ 10 字 | 1 行 36px | 1 行 42~60px |
+| 13 字 | 1 行 32px | 1 行 32px |
+| 26 字 | 2 行 36px | 2 行 36px |
+
+**硬性保证**：文字永不截断、永不加省略号；字号永不低于画布宽度的 1.5%。
+
+### 为什么 `BLOCK_GAP_RATIO` 必须大于行距
+
+如果文字块之间的间隙比块内行距还小，相邻块的文字会比同一块的行更密，
+看起来就像文字被拦腰截断——这是本项目实际踩过的坑。
+
+---
+
+## 已知限制
+
+### PDF 水印会破坏原文件内容
+
+`core/pdf_watermark.rs` 用 `page_dict.set("Contents", ...)` **覆盖**了页面原有的内容流，
+导出的 PDF 会丢失原始页面内容。此外还存在：未注册所用字体资源、没有透明度处理、
+不铺排不旋转、用的是绝对字号而非比例字号、中文未设置编码。
+
+**请勿对 PDF 使用本工具的导出功能。**
+
+### 隐形水印只能嵌入，不能提取
+
+嵌入（导出时自动）是可用的。但提取需要知道嵌入时载荷的 bit 长度，而这个长度没有被记录到
+图片里（且默认剥离元数据），因此无法还原。提取接口目前返回明确错误，不会崩溃。
+
+要做完整需要先确定长度方案，例如：固定长度载荷（不足补零）、把长度写进载荷本身、
+或让用户提取时同时提供原始载荷。
+
+### 其他
+
+- RAW 格式未支持（`FileDropZone` 的过滤器里列了 `raw`，但加载会失败）
+- 描边（`strokeColor` / `strokeWidth`）与阴影（`shadow`）配置字段存在但渲染未实现
+- 单点模式仅接通「居中」，其余八宫格位置与自定义坐标未实现
+- 应用无自动更新、无代码签名，macOS 首次运行需在「系统设置 → 隐私与安全性」中放行
+
+---
+
+## 开发
+
+### 目录结构
+
+```
+scorpion-watermark/
+├── SPEC.md                    需求与技术方案
+├── AGENTS.md                  项目规则（给 AI 助手看）
+├── LICENSE                    PolyForm Noncommercial 1.0.0
+├── scripts/build_font.py      字体子集生成与安装
+├── skills/                    AI 助手工作流
+├── src-tauri/src/
+│   ├── lib.rs                 仅插件与 command 注册
+│   ├── commands/              Tauri command 层
+│   └── core/                  核心逻辑，不依赖 Tauri 运行时
+│       ├── config.rs          前后端共享的数据结构
+│       ├── font.rs            字体缓存、排版常量、字形测量
+│       ├── layout.rs          折行与平铺布局
+│       ├── text_renderer.rs   字形光栅化、旋转、alpha 合成
+│       └── pipeline.rs        处理管线编排
+└── src/
+    ├── components/            PreviewCanvas / VisiblePanel / ...
+    ├── store/                 zustand 状态与参数归一化
+    └── types/                 与 Rust 对齐的 TS 类型
+```
+
+### 常用命令
+
+| 命令 | 说明 |
+|---|---|
+| `npm run tauri dev` | 开发模式 |
+| `npm run tauri build -- --target universal-apple-darwin` | 构建 Universal Binary |
+| `cd src-tauri && cargo test --lib` | 全量测试 |
+| `cd src-tauri && cargo clippy --all-targets` | Rust 静态检查 |
+| `npx tsc -b --force` | 前端类型检查 |
+| `python3 scripts/build_font.py <源字体>` | 重建字体子集 |
+
+### 前后端类型约定
+
+Rust 用 `#[serde(rename_all = "camelCase")]`，TS 侧字段用 camelCase。
+**Tauri v2 的 command 参数名总是 camelCase** —— 例如 Rust 的 `canvas_width`
+在前端必须传 `canvasWidth`，传 snake_case 会静默反序列化失败。
+
+### 容易踩的坑
+
+1. **ab_glyph 的缩放因子是 `scale / height_unscaled`**，不是 `scale / units_per_em`，
+   更不是直接 `h_advance_unscaled * scale`。用错会让文字缓冲区放大上千倍，
+   旋转后被粘贴到画面外，表现为「完全没有水印」。
+2. **Konva 的 `Text` 依赖 canvas `measureText`**，字体没加载完会用 fallback 字体
+   排版，导致文字重叠错位。必须等 `document.fonts.load()` 完成再排版。
+3. **fontTools 每次 `save()` 都会刷新时间戳**，分别保存两次会产生不同字节，
+   前后端字体就不一致了。要只序列化一次、把同一份字节写到两个路径。
+
+---
+
+## 致谢
+
+- 桌面框架：[Tauri](https://tauri.app)
+- 图像处理：[image](https://github.com/image-rs/image)、[imageproc](https://github.com/image-rs/imageproc)、[ab_glyph](https://github.com/alexheretic/ab_glyph)
+- 前端画布：[Konva](https://konvajs.org)、[react-konva](https://github.com/konvajs/react-konva)
+- 状态管理：[Zustand](https://github.com/pmndrs/zustand)
+- PDF：[lopdf](https://github.com/J-F-Liu/lopdf)
+- 隐形水印：[blind_watermark](https://github.com/guangwenwei/blind_watermark)
+- 元数据：[kamadak-exif](https://github.com/kamadak-exif)、[img-parts](https://github.com//image-rs/img-parts)
+- 字体工具：[fonttools](https://github.com/fonttools/fonttools)（构建期脚本依赖）
