@@ -20,7 +20,12 @@ image = { version = "0.25", features = ["jpeg", "png", "gif", "webp"] }
 imageproc = "0.25"
 ab_glyph = "0.2"
 lopdf = "0.34"
-blind_watermark = "0.1"
+
+# 隐形水印载荷需要密码学哈希（感知哈希、密钥派生）与校验和。
+# 两者此前已作为传递依赖存在于依赖树中，此处提升为直接依赖，
+# 不引入新的第三方代码。
+sha2 = "0.10"
+crc32fast = "1"
 kamadak-exif = "0.6"
 img-parts = "0.3"
 

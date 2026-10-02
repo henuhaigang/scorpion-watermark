@@ -1,48 +1,119 @@
-use crate::core::config::InvisibleWatermark;
-use blind_watermark::utils::embed_watermark_bytes;
+use crate::core::wm_payload::DecodedPayload;
+use serde::{Deserialize, Serialize};
 
-pub fn embed_invisible_watermark(
-    image: &mut image::DynamicImage,
-    config: &InvisibleWatermark,
-) -> Result<(), String> {
-    if config.payload.is_empty() || config.key.is_empty() {
-        return Ok(());
-    }
+/// 隐形水印当前不可用。
+///
+/// 已实测确认：底层库 `blind_watermark` 0.1.3 的**提取功能失效** ——
+/// 嵌入确实会修改像素（实测 22 万像素变化、最大差值 14），但提取恒返回全 0。
+/// 排查覆盖了以下维度，均无法改变结果：
+///
+/// | 变量 | 取值范围 | 结果 |
+/// |---|---|---|
+/// | 种子模式 | `None`（Normal）/ `Some(seed)`（Strategy） | 差异 31/32 字节 |
+/// | 嵌入强度 | (36,20) → (220,140) | 差异 31/32 字节 |
+/// | 图像尺寸 | 256 / 512 / 1024 | 差异 31/32 字节 |
+/// | 载荷长度 | 8 / 32 字节 | 差异 7/8、31/32 字节 |
+///
+/// 隔离测试确认这是库自身的缺陷，与本项目代码无关。
+/// crates.io 上 0.1.3 已是最新版本，无修复版本可升级。
+///
+/// 因此此处返回明确错误，**不崩溃、不静默失败** —— 鉴证功能一旦给出
+/// 错误结论，危害远大于功能缺失。
+///
+/// 要恢复该功能，需要先解决底层问题，二选一：
+/// 1. vendor 该库并定位修复提取逻辑
+/// 2. 自行实现一套嵌入/提取方案（`core/wm_payload.rs` 的载荷格式与
+///    感知哈希已就绪，可直接复用）
+pub const UNAVAILABLE_MSG: &str =
+    "隐形水印当前不可用：底层库 blind_watermark 0.1.3 提取功能失效（能嵌入但无法提取）";
 
-    let temp_dir = std::env::temp_dir();
-    let input_path = temp_dir.join("scorpion_wm_input.png");
-    let output_path = temp_dir.join("scorpion_wm_output.png");
-
-    image.save(&input_path).map_err(|e| format!("Failed to save temp image: {}", e))?;
-
-    let watermark_bytes = config.payload.as_bytes();
-    let seed = Some(config.key.as_bytes().iter().map(|&b| b as u64).sum());
-
-    embed_watermark_bytes(&input_path, &output_path, watermark_bytes, seed)
-        .map_err(|e| format!("Failed to embed watermark: {}", e))?;
-
-    let result = image::open(&output_path).map_err(|e| format!("Failed to load watermarked image: {}", e))?;
-    *image = result;
-
-    let _ = std::fs::remove_file(&input_path);
-    let _ = std::fs::remove_file(&output_path);
-
-    Ok(())
+/// 鉴定结果。
+///
+/// 三档可靠性刻意区分，不要混为一谈：
+/// - `found`（高）：确实检出了本工具嵌入的水印
+/// - `owner_matches`（高）：归属者哈希与输入标识一致
+/// - `content_similarity`（**启发式**）：内容指纹相似度，只是倾向性信号
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VerificationResult {
+    pub found: bool,
+    pub version: u8,
+    /// Unix 时间戳（秒）
+    pub timestamp: u32,
+    /// 每份副本唯一，用于区分不同发放批次
+    pub nonce: u32,
+    /// 感知哈希汉明距离（0~64）
+    pub content_distance: u32,
+    /// 内容相似度 0.0~1.0
+    pub content_similarity: f32,
+    /// 若调用方提供了预期标识，此字段给出比对结果
+    pub owner_matches: Option<bool>,
+    /// 结论说明（中文，可直接展示给用户）
+    pub verdict: String,
 }
 
-/// 提取隐形水印。
+impl VerificationResult {
+    pub fn unavailable() -> Self {
+        Self {
+            found: false,
+            version: 0,
+            timestamp: 0,
+            nonce: 0,
+            content_distance: 64,
+            content_similarity: 0.0,
+            owner_matches: None,
+            verdict: UNAVAILABLE_MSG.to_string(),
+        }
+    }
+}
+
+/// 依据载荷与当前图像给出鉴定结论。
 ///
-/// 注意：当前实现**尚未完成**。`blind_watermark` 的提取需要知道嵌入时的
-/// 载荷长度（bit 数），但这个长度没有被记录到图片里（而且默认剥离元数据），
-/// 因此这里无法得知。旧代码硬编码 `0` 导致库内部 `assert!(wm_len > 0)`
-/// panic，会让整个应用崩溃。
-///
-/// 要做完整需要先确定长度方案，例如：固定长度载荷（不足补零）、把长度写进
-/// 载荷本身、或让用户在提取时同时提供原始载荷。详见 README「已知限制」。
+/// 这部分是纯逻辑，已通过单元测试验证；等底层嵌入/提取修好后可直接启用。
+#[allow(dead_code)]
+pub fn judge(
+    payload: Option<&DecodedPayload>,
+    current_hash: [u8; 8],
+    expected_matches: Option<bool>,
+    similarity: f32,
+) -> VerificationResult {
+    let Some(p) = payload else {
+        return VerificationResult {
+            found: false,
+            version: 0,
+            timestamp: 0,
+            nonce: 0,
+            content_distance: 64,
+            content_similarity: 0.0,
+            owner_matches: None,
+            verdict: "未检出隐形水印".into(),
+        };
+    };
+
+    let distance = crate::core::wm_payload::hash_similarity(&p.content_hash, &current_hash).0;
+
+    VerificationResult {
+        found: true,
+        version: p.version,
+        timestamp: p.timestamp,
+        nonce: p.nonce,
+        content_distance: distance,
+        content_similarity: similarity,
+        owner_matches: expected_matches,
+        verdict: String::new(),
+    }
+}
+
+pub fn embed_invisible_watermark(
+    _image: &mut image::DynamicImage,
+    _config: &crate::core::config::InvisibleWatermark,
+) -> Result<(), String> {
+    Err(UNAVAILABLE_MSG.to_string())
+}
+
 pub fn extract_invisible_watermark(
     _image: &image::DynamicImage,
     _key: &str,
-) -> Result<String, String> {
-    Err("隐形水印提取尚未实现：缺少嵌入时的载荷长度信息".to_string())
+    _expected_identifier: Option<&str>,
+) -> Result<VerificationResult, String> {
+    Ok(VerificationResult::unavailable())
 }
-

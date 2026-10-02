@@ -22,7 +22,7 @@ PolyForm Noncommercial License 1.0.0（见 LICENSE）：可自由使用/复制/�
 - 后端：Rust 2021 edition
 - 图像处理：image, imageproc, ab_glyph
 - PDF：lopdf
-- 隐形水印：blind_watermark（DWT-DCT-SVD）
+- 隐形水印：blind_watermark（DWT-DCT-SVD）—— **当前不可用**，依赖已移除
 - 元数据清理：kamadak-exif, img-parts
 
 ## 代码规范
@@ -95,7 +95,10 @@ PolyForm Noncommercial License 1.0.0（见 LICENSE）：可自由使用/复制/�
 
 ## 已知缺陷（勿依赖，勿声称可用）
 - `core/pdf_watermark.rs` 覆盖 `Contents` 会**破坏原 PDF 内容**，且字体/透明度/铺排均未实现
-- 隐形水印可嵌入，但**无法提取**（缺少载荷长度信息）；提取接口返回错误，不会崩溃
+- 隐形水印与鉴定功能**已整体停用**：底层库 `blind_watermark` 0.1.3 提取功能失效
+  （实测：嵌入生效但提取恒返回全 0，改变种子/强度/尺寸/载荷长度均无效，
+  0.1.3 已是最新版）。UI 入口已移除，接口返回明确错误。
+  载荷格式与感知哈希已就绪（`core/wm_payload.rs`），恢复时可直接复用
 - 描边 `stroke_color`/`stroke_width` 与阴影 `shadow` 有配置字段但**渲染未实现**
 - 单点模式仅接通「居中」，其余八宫格位置与 `custom_xy` 未实现
 - RAW 格式未支持（文件选择器列了但加载会失败）

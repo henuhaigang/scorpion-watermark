@@ -15,7 +15,6 @@ pub fn run() {
             commands::preview::generate_preview,
             commands::preview::calculate_layout,
             commands::export::export_file,
-            commands::invisible::extract_invisible_watermark,
             commands::preset::save_preset,
             commands::preset::load_preset,
             commands::preset::delete_preset,

@@ -9,3 +9,4 @@ pub mod pdf_watermark;
 pub mod pipeline;
 pub mod text_renderer;
 pub mod visible_watermark;
+pub mod wm_payload;

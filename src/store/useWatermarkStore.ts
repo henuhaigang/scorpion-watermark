@@ -26,7 +26,6 @@ interface WatermarkState {
   config: WatermarkConfig
   setConfig: (config: WatermarkConfig) => void
   updateVisible: (updates: Partial<WatermarkConfig['visible']>) => void
-  updateInvisible: (updates: Partial<NonNullable<WatermarkConfig['invisible']>>) => void
   updateOutput: (updates: Partial<WatermarkConfig['output']>) => void
 }
 
@@ -62,15 +61,6 @@ export const useWatermarkStore = create<WatermarkState>((set) => ({
       config: {
         ...state.config,
         visible: { ...state.config.visible, ...updates },
-      },
-    })),
-  updateInvisible: (updates) =>
-    set((state) => ({
-      config: {
-        ...state.config,
-        invisible: state.config.invisible
-          ? { ...state.config.invisible, ...updates }
-          : { payload: '', key: '', ...updates },
       },
     })),
   updateOutput: (updates) =>

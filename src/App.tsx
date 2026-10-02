@@ -2,7 +2,6 @@ import { useState } from 'react'
 import FileDropZone from './components/FileDropZone'
 import PreviewCanvas from './components/PreviewCanvas'
 import VisiblePanel from './components/VisiblePanel'
-import InvisiblePanel from './components/InvisiblePanel'
 import OutputPanel from './components/OutputPanel'
 import PresetBar from './components/PresetBar'
 
@@ -21,7 +20,6 @@ function App() {
         <div style={{ width: '320px', borderRight: '1px solid #e0e0e0', overflowY: 'auto', padding: '16px' }}>
           <FileDropZone filePath={filePath} onFileSelect={setFilePath} />
           <VisiblePanel />
-          <InvisiblePanel filePath={filePath} />
           <OutputPanel filePath={filePath} />
         </div>
 
