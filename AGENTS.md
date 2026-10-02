@@ -85,7 +85,8 @@ PolyForm Noncommercial License 1.0.0（见 LICENSE）：可自由使用/复制/�
 - 不要用 PDF 导出功能（`core/pdf_watermark.rs` 会覆盖原页面内容流）
 
 ## 构建产物
-- `dist-packages/Scorpion-Watermark-<版本>-universal.dmg` —— 分发用 DMG
+- `dist-packages/Scorpion-Watermark-<版本>-universal.dmg` —— 分发用 DMG（不入库）
+- `docs/releases/<版本>.md` —— 发布说明，发版时先写这里再复制到 GitHub Release
 - ad-hoc 签名（无 Apple 证书），用户需右键打开绕过 Gatekeeper
 - 详见 README「打包 DMG」，含三个已知构建坑（rustup 镜像 404、PATH 里的
   第三方 xattr、bash 变量后接中文字符）

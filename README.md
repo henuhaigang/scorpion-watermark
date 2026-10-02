@@ -232,7 +232,8 @@ scorpion-watermark/
 │       ├── layout.rs          折行与平铺布局
 │       ├── text_renderer.rs   字形光栅化、旋转、alpha 合成
 │       └── pipeline.rs        处理管线编排
-├── dist-packages/            打包产物（DMG）
+├── docs/releases/            各版本发布说明归档
+├── dist-packages/            打包产物（DMG，不入库）
 └── src/
     ├── components/            PreviewCanvas / VisiblePanel / ...
     ├── store/                 zustand 状态与参数归一化
@@ -261,6 +262,8 @@ scorpion-watermark/
 ```
 dist-packages/Scorpion-Watermark-0.1.0-universal.dmg
 ```
+
+各版本的发布说明归档在 `docs/releases/`，当前：[v0.1.0](docs/releases/v0.1.0.md)
 
 Universal Binary，同时支持 Intel 与 Apple Silicon。原始产物在
 `src-tauri/target/universal-apple-darwin/release/bundle/dmg/`。
