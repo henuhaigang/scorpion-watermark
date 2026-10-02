@@ -70,6 +70,8 @@ PolyForm Noncommercial License 1.0.0（见 LICENSE）：可自由使用/复制/�
 - 重建字体子集：python3 scripts/build_font.py <源字体> --index <N>
 - 重新生成图标：swift scripts/generate_icon.swift（加 --preview 只出预览图）
 - 打包 DMG：./scripts/build_dmg.sh（产物在 dist-packages/）
+  **禁止手工 `cargo build` + `lipo` + `tauri bundle`** —— 实测产物白页，
+  所有校验都通过但内容区不渲染。详见 README「打包 DMG」
 
 ## skills（AI 助手工作流）
 按任务类型选用，改动前先读对应 skill：
@@ -85,7 +87,7 @@ PolyForm Noncommercial License 1.0.0（见 LICENSE）：可自由使用/复制/�
 - 不要用 PDF 导出功能（`core/pdf_watermark.rs` 会覆盖原页面内容流）
 
 ## 构建产物
-- `dist-packages/Scorpion-Watermark-<版本>-universal.dmg` —— 分发用 DMG（不入库）
+- `dist-packages/Scorpion-Watermark-<版本>-<架构>.dmg` —— 分发用 DMG（不入库）
 - `docs/releases/<版本>.md` —— 发布说明，已是可粘贴格式，发版时直接把内容
   复制到 GitHub Release 页面即可，无需加工。注意其中的 SHA256 与体积对应
   **发布当时**的产物，重新构建后会变化，以 Release 页面上的为准

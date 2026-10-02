@@ -282,10 +282,14 @@ scorpion-watermark/
 ### 产物位置
 
 ```
-dist-packages/Scorpion-Watermark-0.1.0-universal.dmg
+dist-packages/Scorpion-Watermark-0.1.0-arm64.dmg
 ```
 
 各版本的发布说明归档在 `docs/releases/`，当前：[v0.1.0](docs/releases/v0.1.0.md)
+
+> ⚠️ **架构说明**：产物默认为**单架构（arm64）**。脚本会优先尝试 Universal Binary，
+> 但需要 `rustup target add x86_64-apple-darwin` 可用；未安装时会自动退回单架构
+> 并给出提示。Intel Mac 用户需自行补装该 target 后重新打包。
 
 Universal Binary，同时支持 Intel 与 Apple Silicon。原始产物在
 `src-tauri/target/universal-apple-darwin/release/bundle/dmg/`。
@@ -300,32 +304,50 @@ Universal Binary，同时支持 Intel 与 Apple Silicon。原始产物在
 构建 x86_64 → `lipo` 合并为 Universal Binary → `tauri bundle` 打包 DMG →
 校验签名 → 复制到 `dist-packages/`。
 
-### 为什么不直接用 `tauri build --target universal-apple-darwin`
+### 必须用官方 `tauri build`
 
-该命令会先调 `rustup target list --installed` 做前置校验。若 x86_64 标准库是
-**手动安装**的（见下一节），rustup 可能不认得，校验就会失败并中止。
-脚本改为用 `cargo` 分别构建两个架构、`lipo` 合并，再交给 `tauri bundle` 打包，
-绕开这个校验。
+**不要用 `cargo build` + `lipo` + `tauri bundle` 手工拼 Universal Binary。**
 
-### 三个会踩的坑
+实测结论：
 
-脚本已经处理了以下问题，手动构建时同样会遇到：
+| 构建方式 | 产物大小 | 运行结果 |
+|---|---|---|
+| `npm run tauri build`（官方） | 17.5 MB | ✅ 正常显示 |
+| `cargo build` + `lipo` + `tauri bundle`（手工） | 33 MB | ❌ **窗口白页** |
+
+手工流程产出的 app 能通过签名校验、CRC 校验、能启动、窗口标题也正常，
+但内容区全白 —— 资源嵌入环节绕过了 Tauri 的构建流程。
+这类问题很难排查：所有校验都通过，只有实际渲染才暴露。
+
+脚本已改为直接调用 `npx tauri build`。
+
+### 两个会踩的坑
 
 1. **rustup 镜像源缺 x86_64 标准库**
    某些镜像（如清华）同步滞后，`rustup target add x86_64-apple-darwin` 会返回
-   404。脚本会自动改为从官方源下载 `rust-std` 组件、解压后手动装入工具链，
-   并补上 rustup 的组件登记（`manifest.in` 需重命名为
-   `manifest-rust-std-x86_64-apple-darwin`，并向 `components` 文件**追加**条目 ——
-   覆盖会丢掉 aarch64 等原有条目）。
+   404，而官方源正常。可绕过：直接下载官方 `rust-std` 组件解压后手动装入工具链。
+
+   ```bash
+   ver=$(rustc --version | awk '{print $2}')
+   ver=1.97.1
+   curl -fLO "https://static.rust-lang.org/dist/<日期>/rust-std-${ver}-x86_64-apple-darwin.tar.xz"
+   tar xf rust-std-${ver}-x86_64-apple-darwin.tar.xz
+   cp -R rust-std-${ver}-x86_64-apple-darwin/rust-std-x86_64-apple-darwin/lib/rustlib/x86_64-apple-darwin \
+     "$(rustc --print sysroot)/lib/rustlib/"
+   ```
+
+   注意：手动装的标准库 `rustup target list --installed` 可能仍不认，
+   `tauri build --target universal-apple-darwin` 的前置校验会失败，
+   此时脚本自动退回单架构。
 
 2. **PATH 里的 `xattr` 不是系统命令**
-   Tauri 打包时会执行 `xattr -cr` 清理 app bundle 的扩展属性。若 PATH 中存在
-   同名的第三方 CLI（例如某些 Python 包提供的 `xattr` 命令），它不支持 `-r`
-   参数，打包会直接失败。脚本开头会把 `/usr/bin` 前置到 PATH。
+   Tauri 打包时执行 `xattr -cr` 清理 app bundle 的扩展属性。若 PATH 中存在同名
+   的第三方 CLI（例如某些 Python 包提供的 `xattr` 命令），它不支持 `-r` 参数，
+   打包会直接失败。脚本开头把 `/usr/bin` 前置到 PATH。
 
-3. **bash 变量名后紧跟中文字符**
-   `echo "$target）"` 会被 bash 解析成变量名 `target）`，在 `set -u` 下报
-   `unbound variable`。中文字符紧跟变量引用时必须写成 `${target}`。
+   > 这个坑还引出一个 shell 陷阱：`"打包 DMG（target=$target）"` 会被 bash
+   > 解析成变量名 `target）`（全角括号被当作变量名的一部分），
+   > `set -u` 下报 `unbound variable`，且 `bash -n` 语法检查发现不了。
 
 ### 二进制体积
 
