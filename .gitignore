@@ -8,3 +8,6 @@ tsconfig.tsbuildinfo
 # 53MB 的 TTC 原始字体集合（Apple Heiti，含繁体/简体两个字面）。
 # 专有授权，且代码已不引用 —— 实际使用的是下面裁剪好的 OFL 子集。不提交。
 src-tauri/assets/fonts/NotoSansCJKsc-Regular.otf
+
+# 打包产物（DMG 通常十几 MB，不入库）
+dist-packages

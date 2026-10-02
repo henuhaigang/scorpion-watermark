@@ -29,3 +29,11 @@ objc2 = "0.5"
 objc2-foundation = { version = "0.2", features = ["NSString"] }
 core-foundation = "0.10"
 core-graphics = "0.24"
+
+[profile.release]
+# 优化体积：分发用的二进制不该带着调试信息。
+# 用 thin LTO 而非完整 LTO —— 体积收益接近，构建时间却短得多
+#（完整 LTO + 单编译单元会让双架构构建慢到难以忍受）。
+opt-level = "s"
+lto = "thin"
+strip = true

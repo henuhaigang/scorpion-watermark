@@ -9,17 +9,27 @@
     "beforeBuildCommand": "npm run build"
   },
   "app": {
-    "windows": [{
-      "title": "Scorpion Watermark",
-      "width": 1280,
-      "height": 800,
-      "minWidth": 960,
-      "minHeight": 640
-    }],
-    "security": { "csp": null }
+    "windows": [
+      {
+        "title": "Scorpion Watermark",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 960,
+        "minHeight": 640
+      }
+    ],
+    "security": {
+      "csp": null
+    }
   },
   "bundle": {
-    "targets": ["dmg", "app"],
+    "targets": [
+      "dmg",
+      "app"
+    ],
+    "shortDescription": "本地离线的图片水印工具",
+    "longDescription": "为图片添加斜向平铺可见文字水印与隐形水印，导出时自动剥离 EXIF/GPS 等隐私元数据。完全本地离线处理，不发起任何网络请求。",
+    "copyright": "Copyright (c) 2026 Scorpion",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -29,7 +39,7 @@
     "macOS": {
       "minimumSystemVersion": "11.0",
       "exceptionDomain": "",
-      "signingIdentity": null,
+      "signingIdentity": "-",
       "providerShortName": null,
       "entitlements": null
     }

@@ -68,6 +68,8 @@ PolyForm Noncommercial License 1.0.0（见 LICENSE）：可自由使用/复制/�
 - Rust 检查：cd src-tauri && cargo clippy
 - 全量测试：cd src-tauri && cargo test --lib
 - 重建字体子集：python3 scripts/build_font.py <源字体> --index <N>
+- 重新生成图标：swift scripts/generate_icon.swift（加 --preview 只出预览图）
+- 打包 DMG：./scripts/build_dmg.sh（产物在 dist-packages/）
 
 ## skills（AI 助手工作流）
 按任务类型选用，改动前先读对应 skill：
@@ -81,6 +83,12 @@ PolyForm Noncommercial License 1.0.0（见 LICENSE）：可自由使用/复制/�
 - 不要引入不必要的依赖，新增依赖前先说明理由
 - 不要删除或替换字体文件除非用户明确要求
 - 不要用 PDF 导出功能（`core/pdf_watermark.rs` 会覆盖原页面内容流）
+
+## 构建产物
+- `dist-packages/Scorpion-Watermark-<版本>-universal.dmg` —— 分发用 DMG
+- ad-hoc 签名（无 Apple 证书），用户需右键打开绕过 Gatekeeper
+- 详见 README「打包 DMG」，含三个已知构建坑（rustup 镜像 404、PATH 里的
+  第三方 xattr、bash 变量后接中文字符）
 
 ## 已知缺陷（勿依赖，勿声称可用）
 - `core/pdf_watermark.rs` 覆盖 `Contents` 会**破坏原 PDF 内容**，且字体/透明度/铺排均未实现

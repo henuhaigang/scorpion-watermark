@@ -218,7 +218,10 @@ scorpion-watermark/
 ├── SPEC.md                    需求与技术方案
 ├── AGENTS.md                  项目规则（给 AI 助手看）
 ├── LICENSE                    PolyForm Noncommercial 1.0.0
-├── scripts/build_font.py      字体子集生成与安装
+├── scripts/
+│   ├── build_font.py         字体子集生成与安装
+│   ├── build_dmg.sh          打包 Universal Binary DMG
+│   └── generate_icon.swift   应用图标生成
 ├── skills/                    AI 助手工作流
 ├── src-tauri/src/
 │   ├── lib.rs                 仅插件与 command 注册
@@ -229,6 +232,7 @@ scorpion-watermark/
 │       ├── layout.rs          折行与平铺布局
 │       ├── text_renderer.rs   字形光栅化、旋转、alpha 合成
 │       └── pipeline.rs        处理管线编排
+├── dist-packages/            打包产物（DMG）
 └── src/
     ├── components/            PreviewCanvas / VisiblePanel / ...
     ├── store/                 zustand 状态与参数归一化
@@ -240,11 +244,87 @@ scorpion-watermark/
 | 命令 | 说明 |
 |---|---|
 | `npm run tauri dev` | 开发模式 |
-| `npm run tauri build -- --target universal-apple-darwin` | 构建 Universal Binary |
+| `./scripts/build_dmg.sh` | **打包 Universal Binary DMG**（推荐，见下） |
+| `./scripts/build_dmg.sh --fast` | 只打包本机架构，快约 5 倍 |
+| `swift scripts/generate_icon.swift` | 重新生成应用图标 |
+| `python3 scripts/build_font.py <源字体>` | 重建字体子集 |
 | `cd src-tauri && cargo test --lib` | 全量测试 |
 | `cd src-tauri && cargo clippy --all-targets` | Rust 静态检查 |
 | `npx tsc -b --force` | 前端类型检查 |
-| `python3 scripts/build_font.py <源字体>` | 重建字体子集 |
+
+---
+
+## 打包 DMG
+
+### 产物位置
+
+```
+dist-packages/Scorpion-Watermark-0.1.0-universal.dmg
+```
+
+Universal Binary，同时支持 Intel 与 Apple Silicon。原始产物在
+`src-tauri/target/universal-apple-darwin/release/bundle/dmg/`。
+
+### 一条命令
+
+```bash
+./scripts/build_dmg.sh
+```
+
+脚本会依次完成：构建前端 → 构建 arm64 → 确保 x86_64 标准库可用 →
+构建 x86_64 → `lipo` 合并为 Universal Binary → `tauri bundle` 打包 DMG →
+校验签名 → 复制到 `dist-packages/`。
+
+### 为什么不直接用 `tauri build --target universal-apple-darwin`
+
+该命令会先调 `rustup target list --installed` 做前置校验。若 x86_64 标准库是
+**手动安装**的（见下一节），rustup 可能不认得，校验就会失败并中止。
+脚本改为用 `cargo` 分别构建两个架构、`lipo` 合并，再交给 `tauri bundle` 打包，
+绕开这个校验。
+
+### 三个会踩的坑
+
+脚本已经处理了以下问题，手动构建时同样会遇到：
+
+1. **rustup 镜像源缺 x86_64 标准库**
+   某些镜像（如清华）同步滞后，`rustup target add x86_64-apple-darwin` 会返回
+   404。脚本会自动改为从官方源下载 `rust-std` 组件、解压后手动装入工具链，
+   并补上 rustup 的组件登记（`manifest.in` 需重命名为
+   `manifest-rust-std-x86_64-apple-darwin`，并向 `components` 文件**追加**条目 ——
+   覆盖会丢掉 aarch64 等原有条目）。
+
+2. **PATH 里的 `xattr` 不是系统命令**
+   Tauri 打包时会执行 `xattr -cr` 清理 app bundle 的扩展属性。若 PATH 中存在
+   同名的第三方 CLI（例如某些 Python 包提供的 `xattr` 命令），它不支持 `-r`
+   参数，打包会直接失败。脚本开头会把 `/usr/bin` 前置到 PATH。
+
+3. **bash 变量名后紧跟中文字符**
+   `echo "$target）"` 会被 bash 解析成变量名 `target）`，在 `set -u` 下报
+   `unbound variable`。中文字符紧跟变量引用时必须写成 `${target}`。
+
+### 二进制体积
+
+`Cargo.toml` 的 release profile 开启了 `opt-level = "s"` + thin LTO + `strip`，
+二进制从 **99MB 降到 18MB**。用 thin LTO 而非完整 LTO 是因为体积收益接近，
+但构建时间短得多。
+
+### ⚠️ 代码签名与 Gatekeeper
+
+当前构建产物是 **ad-hoc 签名**（`tauri.conf.json` 里 `signingIdentity: "-"`），
+因为没有 Apple 开发者证书。
+
+**用户下载后双击会被 Gatekeeper 拦截**，提示「无法验证开发者」，需要：
+
+- 右键点击 app → 选择「打开」→ 确认打开，或
+- 终端执行：`xattr -cr /Applications/Scorpion\ Watermark.app`
+
+要彻底解决必须购买 **Apple Developer Program（$99/年）**，然后：
+
+1. 用 Developer ID 证书签名（把 `signingIdentity` 改为证书名）
+2. 提交 Apple 公证（notarization）：`xcrun notarytool submit ... --wait`
+3.  staple 公证凭据：`xcrun stapler staple`
+
+公证后用户双击即可安装，无需任何绕过操作。
 
 ### 前后端类型约定
 
