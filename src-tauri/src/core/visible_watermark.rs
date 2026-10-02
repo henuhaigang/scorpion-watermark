@@ -63,7 +63,7 @@ mod tests {
             opacity: 0.5,
             font_size: 36.0,
             font_size_ratio: 3.0,
-            line_spacing: 2.0,
+            line_spacing: 0.5,
             color: "#000000".to_string(),
             stroke_color: None,
             stroke_width: 0.0,
@@ -147,9 +147,10 @@ mod tests {
     }
 
     #[test]
-    fn test_layout_wraps_without_shrinking_when_font_is_readable() {
-        // 13 个字 13×36=468px > 420px 单行上限。
-        // 应换行，但**保持用户设定的字号**，而不是缩到很小硬塞进一行。
+    fn test_layout_shrinks_to_keep_single_line_when_still_readable() {
+        // 13 个字在设定字号下需要 13×36=468px > 420px 单行上限。
+        // 缩到 420/13≈32px 仍高于可读阈值(24px)，因此应缩小字号保持单行，
+        // 而不是换行 —— 用户期望「文字变多时自动缩小让水印完整显示」。
         let text = "仅供办理人保车险使用的时候";
         let config = test_config(text);
         let layout = calculate_layout(1200, 900, &config).unwrap();
@@ -160,7 +161,36 @@ mod tests {
             layout.font_size,
             layout.font_auto_shrunk
         );
-        assert_eq!(layout.lines.len(), 2, "单行放不下应换行");
+        assert_eq!(layout.lines.len(), 1, "缩到可读阈值以内就该保持单行");
+        assert!(
+            layout.font_size >= 1200.0 * 0.02,
+            "缩小后的字号不应低于可读阈值，实际 {:.1}",
+            layout.font_size
+        );
+        assert!(
+            layout.font_size < 36.0,
+            "确实应缩小字号（设定值 36），实际 {:.1}",
+            layout.font_size
+        );
+        let joined: String = layout.lines.concat();
+        assert_eq!(joined, text, "文字不应被截断");
+    }
+
+    #[test]
+    fn test_layout_wraps_when_single_line_would_be_too_small() {
+        // 26 个字若压成单行需 420/26≈16px，低于可读阈值(24px)。
+        // 此时应改用 2 行换取更大的字号，保证看得见。
+        let text = "仅供办理人保车险使用的时候此文件仅作内部使用不得外传";
+        let config = test_config(text);
+        let layout = calculate_layout(1200, 900, &config).unwrap();
+        println!(
+            "text={} lines={:?} font={:.1}",
+            text, layout.lines, layout.font_size
+        );
+        assert!(
+            layout.lines.len() > 1,
+            "单行需要缩得太小，应换行而不是硬塞"
+        );
         assert!(
             layout.font_size >= 1200.0 * 0.02,
             "换行时字号不应低于可读阈值，实际 {:.1}",
@@ -168,6 +198,42 @@ mod tests {
         );
         let joined: String = layout.lines.concat();
         assert_eq!(joined, text, "文字不应被截断");
+    }
+
+    #[test]
+    fn test_line_spacing_zero_keeps_single_line_height() {
+        // 行间距 0 表示紧凑单倍行距：行高应等于字号本身，而不是归零导致各行重叠
+        let text = "仅供办理人保车险使用的时候";
+        let mut config = test_config(text);
+        config.line_spacing = 0.0;
+        let layout = calculate_layout(1200, 900, &config).unwrap();
+        assert!(
+            layout.text_height >= layout.font_size * layout.lines.len() as f32 - 0.01,
+            "行间距为 0 时行高仍应至少为一个字号，实际 text_height={:.1} font_size={:.1} lines={}",
+            layout.text_height,
+            layout.font_size,
+            layout.lines.len()
+        );
+    }
+
+    #[test]
+    fn test_line_spacing_monotonic() {
+        // 行间距越大，行高越高
+        let text = "仅供办理人保车险使用的时候";
+        let mut prev = 0.0f32;
+        for spacing in [0.0f32, 0.5, 1.0, 1.5] {
+            let mut config = test_config(text);
+            config.line_spacing = spacing;
+            let layout = calculate_layout(1200, 900, &config).unwrap();
+            assert!(
+                layout.text_height > prev,
+                "行间距 {} 的行高({})应大于上一档({})",
+                spacing,
+                layout.text_height,
+                prev
+            );
+            prev = layout.text_height;
+        }
     }
 
     #[test]

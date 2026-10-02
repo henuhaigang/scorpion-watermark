@@ -3,8 +3,12 @@ use std::sync::OnceLock;
 
 const FONT_DATA: &[u8] = include_bytes!("../../assets/fonts/WatermarkSC-Regular.ttf");
 
-/// 单行文字高度相对字号的倍数
-pub const LINE_HEIGHT_RATIO: f32 = 1.3;
+/// 行高基准（相对字号）。行间距在此基础上叠加：
+/// `行高 = 字号 × (LINE_HEIGHT_BASE + 行间距)`
+///
+/// 因此行间距 = 0 表示紧凑的单倍行距（不会重叠），数值越大越松。
+/// 若沿用 `字号 × 系数 × 行间距` 的写法，行间距为 0 会让行高归零导致各行叠在一起。
+pub const LINE_HEIGHT_BASE: f32 = 1.0;
 /// 相邻文字块之间的间隙相对字号的倍数。
 ///
 /// 必须明显大于块内行距（`LINE_HEIGHT_RATIO * line_spacing`），

@@ -27,7 +27,7 @@ interface LayoutResult {
   missing_glyphs: string[]
 }
 
-const LINE_HEIGHT_RATIO = 1.3
+const LINE_HEIGHT_BASE = 1.0
 const CJK_FONT_FAMILY = "'Scorpion Watermark SC', sans-serif"
 
 export default function PreviewCanvas({ filePath }: PreviewCanvasProps) {
@@ -167,7 +167,7 @@ export default function PreviewCanvas({ filePath }: PreviewCanvasProps) {
   const watermarkElements = useMemo(() => {
     if (!layout || !config.visible.enabled || !config.visible.text) return null
 
-    const lineHeight = layout.font_size * LINE_HEIGHT_RATIO * Math.max(config.visible.lineSpacing, 1)
+    const lineHeight = layout.font_size * (LINE_HEIGHT_BASE + Math.max(config.visible.lineSpacing, 0))
 
     return layout.items.map((item, index) => (
       <Text

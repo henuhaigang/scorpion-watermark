@@ -52,15 +52,20 @@ PolyForm Noncommercial License 1.0.0（见 LICENSE）：可自由使用/复制/�
 - 项目禁止网络请求，**不要自动下载字体**，让用户提供文件
 - 字体是裁剪过的子集，生僻字可能缺失；`calculate_layout` 会返回 `missing_glyphs` 供前端提示
 
-## 排版规则（core/font.rs 常量）
+## 排版规则
+- 文字变多时**自动缩小字号**尽量保持单行；压成单行会低于可读阈值时才换行
 - `MAX_LINE_WIDTH_RATIO` 0.35：单行文字最长占画布宽度
-- `COMFORTABLE_FONT_RATIO` 0.02：字号低于此值就改用多行，避免水印小到看不见
-- 字号一律经 `font.rs` 的 `scale_for()` 转换：`PxScale` 是行框高度，而界面字号是 em 字号，
-  两者对多数中文字体并不相等（Noto Sans SC 行框是 1448/1000），直接 `PxScale::from()` 会偏小 30%
+- `COMFORTABLE_FONT_RATIO` 0.02：可读阈值，低于此值宁可换行也不硬塞单行
 - `MIN_FONT_RATIO` 0.015：字号绝对下限
 - `MAX_LINES` 3：最多行数
+- 行间距范围 **0~1.5**（默认 0.5），`行高 = 字号 × (LINE_HEIGHT_BASE + 行间距)`
+  - 语义是「额外行距」而非「行高倍数」：倍数写法下行间距 0 会让行高归零导致重叠
+- 字号一律经 `font.rs` 的 `scale_for()` 转换：`PxScale` 是行框高度，而界面字号是 em 字号，
+  两者对多数中文字体并不相等（Noto Sans SC 行框是 1448/1000），直接 `PxScale::from()` 会偏小 30%
 - `BLOCK_GAP_RATIO` 必须明显大于块内行距，否则相邻块的文字比同一块的行更密，看起来像被截断
 - 文字任何情况下都不截断，宁可换行或缩小字号
+- `WIDTH_TOLERANCE` 1px：`fits_in_lines` 与 `split_by_width` 必须用同一容差，
+  否则会出现「判定单行放得下、渲染时又被切开」的矛盾
 
 ## 开发命令
 - 开发：npm run tauri dev

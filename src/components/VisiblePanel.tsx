@@ -131,8 +131,8 @@ export default function VisiblePanel() {
         </label>
         <input
           type="range"
-          min={1}
-          max={2}
+          min={0}
+          max={1.5}
           step={0.05}
           value={v.lineSpacing}
           onChange={(e) => updateVisible({ lineSpacing: Number(e.target.value) })}

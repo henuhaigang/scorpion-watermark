@@ -1,4 +1,4 @@
-use crate::core::font::{font, scale_for, LINE_HEIGHT_RATIO};
+use crate::core::font::{font, scale_for, LINE_HEIGHT_BASE};
 
 use image::{DynamicImage, Rgba, RgbaImage};
 use imageproc::drawing::{draw_text_mut, text_size};
@@ -25,7 +25,7 @@ pub fn render_text(image: &mut DynamicImage, params: &RenderParams) -> Result<()
     }
 
     let padding = params.font_size * 0.3;
-    let line_height = params.font_size * LINE_HEIGHT_RATIO * params.line_spacing.max(1.0);
+    let line_height = params.font_size * (LINE_HEIGHT_BASE + params.line_spacing.max(0.0));
 
     // 用 imageproc 的 text_size 测量真实墨迹范围，避免缓冲区过小切掉字形
     let mut max_line_width = 0.0f32;

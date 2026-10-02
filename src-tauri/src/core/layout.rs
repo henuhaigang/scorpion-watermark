@@ -1,10 +1,15 @@
 use crate::core::config::VisibleWatermark;
 use crate::core::font::{
     font, measure_text_width, missing_glyphs, scale_for, BLOCK_GAP_RATIO, COMFORTABLE_FONT_RATIO,
-    LINE_HEIGHT_RATIO, MAX_FONT_RATIO, MAX_LINES, MAX_LINE_WIDTH_RATIO, MIN_FONT_RATIO,
+    LINE_HEIGHT_BASE, MAX_FONT_RATIO, MAX_LINES, MAX_LINE_WIDTH_RATIO, MIN_FONT_RATIO,
 };
 use ab_glyph::{FontRef, PxScale};
 use serde::{Deserialize, Serialize};
+
+/// 宽度比较容差（px）。字号恰好等于「宽度上限 / 每行字数」时，累计宽度会因
+/// 浮点误差略微超出上限。若「判断能否放下」与「实际拆分」两处阈值不一致，
+/// 会出现判定单行放得下、渲染时却又被切开的矛盾。
+const WIDTH_TOLERANCE: f32 = 1.0;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LayoutResult {
@@ -55,7 +60,7 @@ pub fn calculate_layout(
     let max_font = w * MAX_FONT_RATIO;
     let max_line_width = w * MAX_LINE_WIDTH_RATIO;
     let comfortable_font = w * COMFORTABLE_FONT_RATIO;
-    let line_spacing = config.line_spacing.max(1.0);
+    let line_spacing = config.line_spacing.max(0.0);
 
     // 用户按比例设定的字号
     let ratio_font = (w * config.font_size_ratio / 100.0).clamp(min_font, max_font);
@@ -74,7 +79,7 @@ pub fn calculate_layout(
     let scale = scale_for(font, font_size);
     let lines = wrap_text(font, scale, &config.text, max_line_width, target_lines);
 
-    let line_height = font_size * LINE_HEIGHT_RATIO * line_spacing;
+    let line_height = font_size * (LINE_HEIGHT_BASE + line_spacing);
     let text_width = lines
         .iter()
         .map(|l| measure_text_width(font, scale, l))
@@ -142,10 +147,11 @@ pub fn calculate_layout(
 /// 决定最终的行数与字号。
 ///
 /// 优先级：
-/// 1. 全文在**用户设定的字号**下能单行放下 → 单行。
-///    （这是用户自己的选择，即使该字号偏小也尊重，不擅自换行）
-/// 2. 否则逐个增加行数，取**行数最少且字号不低于可读阈值**的方案，
-///    即宁可换行也要换取更大的字号，避免水印小到看不见。
+/// 1. 从单行开始试，逐行增加，取**行数最少、且字号不低于可读阈值**的方案。
+///    单行也需要缩字号才放得下时，只要缩完仍然可读，就用单行 —— 这样文字
+///    越少行越直观，符合「让水印完整显示成一行」的预期。
+/// 2. 如果缩到单行会低于可读阈值，则改用多行换取更大的字号，避免水印
+///    小到看不见（这是文字极长时的取舍）。
 /// 3. 兜底：保持用户设定的字号，取能放下全文的最少行数
 ///
 /// 文字永远完整显示，任何情况下都不截断。
@@ -162,21 +168,16 @@ fn choose_font_and_lines(
         (max_line_width / per_line.max(1.0)).clamp(min_font, ratio_font)
     };
 
-    // 1) 设定字号下就能单行放下 —— 不缩小，直接单行
-    if fits_in_lines(font, text, ratio_font, 1, max_line_width) {
-        return (ratio_font, 1);
-    }
-
-    // 2) 需要缩小才能单行：若缩到可读阈值以下就改用多行换更大字号
-    for lines in 2..=MAX_LINES {
+    // 从 1 行开始：优先单行（必要时缩小字号），再考虑多行
+    for lines in 1..=MAX_LINES {
         let f = font_for(lines);
         if f >= comfortable_font && fits_in_lines(font, text, f, lines, max_line_width) {
             return (f, lines);
         }
     }
 
-    // 3) 兜底：维持用户设定的字号，用能放下全文的最少行数
-    for lines in 2..=MAX_LINES {
+    // 兜底：维持用户设定的字号，用能放下全文的最少行数
+    for lines in 1..=MAX_LINES {
         if fits_in_lines(font, text, ratio_font, lines, max_line_width) {
             return (ratio_font, lines);
         }
@@ -205,12 +206,13 @@ fn fits_in_lines(
     lines: usize,
     max_line_width: f32,
 ) -> bool {
+    let limit = max_line_width + WIDTH_TOLERANCE;
     let scale = scale_for(font, font_size);
     text.split('\n').all(|segment| {
         let chars: Vec<char> = segment.chars().collect();
         split_evenly(&chars, lines)
             .iter()
-            .all(|part| measure_text_width(font, scale, &part.iter().collect::<String>()) <= max_line_width)
+            .all(|part| measure_text_width(font, scale, &part.iter().collect::<String>()) <= limit)
     })
 }
 
@@ -276,7 +278,7 @@ fn split_by_width(font: &FontRef, scale: PxScale, chars: &[char], max_width: f32
 
     for &ch in chars {
         let w = measure_text_width(font, scale, &ch.to_string());
-        if !current.is_empty() && width + w > max_width {
+        if !current.is_empty() && width + w > max_width + WIDTH_TOLERANCE {
             out.push(std::mem::take(&mut current));
             width = 0.0;
         }
