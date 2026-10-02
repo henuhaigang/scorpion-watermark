@@ -52,7 +52,8 @@ pub fn apply_visible_watermark(
 mod tests {
     use super::*;
     use crate::core::font::LINE_HEIGHT_BASE;
-    use crate::core::config::VisibleWatermark;
+    use crate::core::layout::LayoutResult;
+        use crate::core::config::VisibleWatermark;
     use image::{Rgba, RgbaImage};
 
     fn test_config(text: &str) -> VisibleWatermark {
@@ -307,66 +308,8 @@ mod tests {
         assert_eq!(min_alpha, 255, "不透明底图叠加水印后 alpha 应保持 255");
     }
 
-    #[test]
-    fn test_block_gap_is_independent_from_line_spacing() {
-        // 行间距与块间距是两个独立参数：行间距为 0 时块间距不应随之变化，
-        // 否则用户无法单独控制平铺疏密（曾因二者耦合导致「行间距调到 0 仍很松」）
-        let text = "机密文件";
-        let base = |ls: f32, gap: f32| {
-            let mut c = test_config(text);
-            c.line_spacing = ls;
-            c.block_gap_ratio = gap;
-            calculate_layout(1200, 900, &c).unwrap()
-        };
-        // 块间距 = max(字号×滑块值, 行高)，下限保证不小于块内行距
-        let expect = |ratio: f32, ls: f32| {
-            let l = base(ls, ratio);
-            let line_height = l.font_size * (LINE_HEIGHT_BASE + ls);
-            let want = (l.font_size * ratio).max(line_height * 1.0);
-            assert!(
-                (l.block_gap - want).abs() < 0.01,
-                "块间距应为 {}，实际 {}（滑块 {}，行间距 {}）",
-                want,
-                l.block_gap,
-                ratio,
-                ls
-            );
-        };
-        for ls in [0.0f32, 0.5, 1.5] {
-            for ratio in [0.0f32, 0.5, 1.0, 2.0, 3.0] {
-                expect(ratio, ls);
-            }
-        }
-
-        // 行间距变化不应直接改变块间距（除非触发了「不小于行高」兜底）
-        let lo = base(0.0, 1.0);
-        let hi = base(1.5, 3.0);
-        assert!(
-            hi.block_gap > lo.block_gap,
-            "块间距滑块应能放大间距：{} vs {}",
-            lo.block_gap,
-            hi.block_gap
-        );
-    }
-
-    #[test]
-    fn test_block_gap_never_smaller_than_line_height() {
-        // 块间距过小会让相邻块的文字比同一块的行更密，看起来像被拦腰截断，
-        // 因此低于行高时按行高兜底
-        let text = "机密文件";
-        let mut c = test_config(text);
-        c.line_spacing = 1.5;
-        c.block_gap_ratio = 0.0;
-        let l = calculate_layout(1200, 900, &c).unwrap();
-        let line_height = l.font_size * (LINE_HEIGHT_BASE + 1.5);
-        assert!(
-            l.block_gap >= line_height - 0.01,
-            "块间距 {} 不得小于行高 {}",
-            l.block_gap,
-            line_height
-        );
-    }
-
+ 
+ 
     #[test]
     fn test_line_spacing_zero_is_tightest_line_height() {
         // 行间距 0 应给出最紧凑的行高（恰为一个字号）
@@ -383,5 +326,74 @@ mod tests {
             l.font_size,
             l.lines.len()
         );
+    }
+
+    /// 取网格中相邻两行的中心距（去重后取最小正间隔）
+    fn row_step(c: &VisibleWatermark) -> (LayoutResult, f32) {
+        let mut c = c.clone();
+        c.angle = 0.0; // 正交网格，才能直接用 y 坐标量行距
+        let l = calculate_layout(1200, 900, &c).unwrap();
+        let mut ys: Vec<f32> = l.items.iter().map(|i| i.y).collect();
+        ys.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        ys.dedup_by(|a, b| (*a - *b).abs() < 0.01);
+        let step = ys.windows(2).map(|w| w[1] - w[0]).fold(f32::MAX, f32::min);
+        (l, step)
+    }
+
+    #[test]
+    fn test_block_gap_zero_makes_rows_touch() {
+        // 滑块语义是「两行水印之间留多少空白」，0 必须真正紧贴。
+        // 曾用 max(字号×滑块值, 行高) 兜底，导致 0 时仍留一个行高的空白。
+        for ls in [0.0f32, 0.5, 1.5] {
+            let mut c = test_config("机密文件");
+            c.line_spacing = ls;
+            c.block_gap_ratio = 0.0;
+            let (l, step) = row_step(&c);
+            let ink_gap = step - l.font_size;
+            assert!(
+                ink_gap.abs() < 0.01,
+                "行间距 {} 时 gap=0 应紧贴，实际残留空白 {}",
+                ls,
+                ink_gap
+            );
+        }
+    }
+
+    #[test]
+    fn test_block_gap_scales_row_spacing() {
+        // 单行块：行中心距 = 字号 + 块间距。块间距每加 1.0 即多一个字号。
+        for gap in [0.0f32, 0.5, 1.0, 2.0] {
+            let mut c = test_config("机密文件");
+            c.block_gap_ratio = gap;
+            let (l, step) = row_step(&c);
+            let expected = l.font_size + l.font_size * gap;
+            assert!(
+                (step - expected).abs() < 0.01,
+                "gap {} 的行中心距应为 {}，实际 {}",
+                gap,
+                expected,
+                step
+            );
+        }
+    }
+
+    #[test]
+    fn test_block_gap_zero_with_multiline_block() {
+        // 多行块：行中心距 = 墨迹高度 = 字号 + (行数-1)×行高
+        for ls in [0.0f32, 0.5, 1.5] {
+            let mut c = test_config("仅供办理人保车险使用的时候此文件仅作内部使用");
+            c.line_spacing = ls;
+            c.block_gap_ratio = 0.0;
+            let (l, step) = row_step(&c);
+            let line_height = l.font_size * (LINE_HEIGHT_BASE + ls);
+            let expected = l.font_size + line_height * (l.lines.len() - 1) as f32;
+            assert!(
+                (step - expected).abs() < 0.01,
+                "多行块(行间距 {}) gap=0 的行中心距应为墨迹高度 {}，实际 {}",
+                ls,
+                expected,
+                step
+            );
+        }
     }
 }

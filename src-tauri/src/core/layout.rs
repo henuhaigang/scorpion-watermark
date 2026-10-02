@@ -1,8 +1,7 @@
 use crate::core::config::VisibleWatermark;
 use crate::core::font::{
-    font, measure_text_width, missing_glyphs, scale_for, BLOCK_GAP_MIN_OF_LINE,
-    COMFORTABLE_FONT_RATIO, LINE_HEIGHT_BASE, MAX_FONT_RATIO, MAX_LINES, MAX_LINE_WIDTH_RATIO,
-    MIN_FONT_RATIO,
+    font, measure_text_width, missing_glyphs, scale_for, COMFORTABLE_FONT_RATIO,
+    LINE_HEIGHT_BASE, MAX_FONT_RATIO, MAX_LINES, MAX_LINE_WIDTH_RATIO, MIN_FONT_RATIO,
 };
 use ab_glyph::{FontRef, PxScale};
 use serde::{Deserialize, Serialize};
@@ -91,12 +90,23 @@ pub fn calculate_layout(
     let text_height = line_height * lines.len() as f32;
 
     // 间距基于字号，与文本长度解耦，长短文本的视觉密度保持一致。
-    // 块间距不得小于块内行距，否则相邻块的文字会比同一块的行更密，
-    // 看起来像文字被拦腰截断。
-    let min_gap = line_height * BLOCK_GAP_MIN_OF_LINE;
-    let gap = (font_size * config.block_gap_ratio).max(min_gap);
+    //
+    // 滑块语义是「相邻两行水印之间留多少空白」，因此 0 就是紧贴，不设下限 ——
+    // 早期版本用 max(字号×滑块值, 行高) 兜底，导致滑块拉到 0 时间距仍等于
+    // 一个行高，看起来「调到 0 也没挨在一起」。
+    let gap = (font_size * config.block_gap_ratio).max(0.0);
+
+    // 竖直方向按**墨迹高度**而非行框高度计算间距。单行时行框含行距留白，
+    // 若按 text_height(=行高×行数) 排布，gap=0 也会残留半个行高的空白。
+    // 墨迹高度 = (行数-1)×行距 + 一个字号。
+    let ink_height = if lines.is_empty() {
+        0.0
+    } else {
+        line_height * (lines.len() - 1) as f32 + font_size
+    };
+
     let spacing_x = text_width + gap;
-    let spacing_y = text_height + gap;
+    let spacing_y = ink_height + gap;
 
     // 保留角度符号，使网格排布方向与字形旋转方向一致
     let angle_rad = config.angle.to_radians();

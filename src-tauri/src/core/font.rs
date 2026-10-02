@@ -9,11 +9,6 @@ const FONT_DATA: &[u8] = include_bytes!("../../assets/fonts/WatermarkSC-Regular.
 /// 因此行间距 = 0 表示紧凑的单倍行距（不会重叠），数值越大越松。
 /// 若沿用 `字号 × 系数 × 行间距` 的写法，行间距为 0 会让行高归零导致各行叠在一起。
 pub const LINE_HEIGHT_BASE: f32 = 1.0;
-/// 块间距相对块内行高的下限倍数。
-///
-/// 若块间距小于块内行距，相邻块的文字会比同一块的行更密，看起来像被截断。
-/// 用户设定的块间距低于此值时按此值兜底。
-pub const BLOCK_GAP_MIN_OF_LINE: f32 = 1.0;
 /// 单行文字最长占画布宽度的比例
 pub const MAX_LINE_WIDTH_RATIO: f32 = 0.35;
 /// 字号下限（相对画布宽度），低于此值不再缩小，改为增加行数
