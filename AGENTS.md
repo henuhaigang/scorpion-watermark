@@ -86,7 +86,9 @@ PolyForm Noncommercial License 1.0.0（见 LICENSE）：可自由使用/复制/�
 
 ## 构建产物
 - `dist-packages/Scorpion-Watermark-<版本>-universal.dmg` —— 分发用 DMG（不入库）
-- `docs/releases/<版本>.md` —— 发布说明，发版时先写这里再复制到 GitHub Release
+- `docs/releases/<版本>.md` —— 发布说明，已是可粘贴格式，发版时直接把内容
+  复制到 GitHub Release 页面即可，无需加工。注意其中的 SHA256 与体积对应
+  **发布当时**的产物，重新构建后会变化，以 Release 页面上的为准
 - ad-hoc 签名（无 Apple 证书），用户需右键打开绕过 Gatekeeper
 - 详见 README「打包 DMG」，含三个已知构建坑（rustup 镜像 404、PATH 里的
   第三方 xattr、bash 变量后接中文字符）
