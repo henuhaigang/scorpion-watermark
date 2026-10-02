@@ -113,27 +113,54 @@ pub fn calculate_layout(
     let cos = angle_rad.cos();
     let sin = angle_rad.sin();
 
-    let diagonal = ((canvas_width as f32).powi(2) + (canvas_height as f32).powi(2)).sqrt();
-    let radius = diagonal / 2.0;
+    // 网格在**旋转坐标系**下生成，需要先求出画布矩形旋转后的包络范围。
+    //
+    // 早期版本用对角线长度估算行列数、并按圆形半径裁剪，导致画布四角出现空白：
+    // 矩形四角到中心的距离恰等于半对角线，正好落在 `dist > radius` 的边界上被
+    // 剔掉，而对角线长度也不足以覆盖旋转后张开的矩形。字号越大、行距越大，
+    // 空白越明显（实测 1200×900、字号 96px 时左上角缺 21.7px）。
+    //
+    // 这里改为：把画布四角逆旋转到网格坐标，取 x/y 绝对值的最大值作为包络，
+    // 再各留一格余量，确保旋转后每一个角都被覆盖。
+    let half_w = canvas_width as f32 / 2.0;
+    let half_h = canvas_height as f32 / 2.0;
 
-    let count_x = (diagonal / spacing_x).ceil() as i32 + 2;
-    let count_y = (diagonal / spacing_y).ceil() as i32 + 2;
+    let mut extent_x = 0.0f32;
+    let mut extent_y = 0.0f32;
+    for (dx, dy) in [
+        (-half_w, -half_h),
+        (half_w, -half_h),
+        (-half_w, half_h),
+        (half_w, half_h),
+    ] {
+        // 逆旋转（grid → canvas 是正旋，这里取其转置）
+        let gx = dx * cos + dy * sin;
+        let gy = -dx * sin + dy * cos;
+        extent_x = extent_x.max(gx.abs());
+        extent_y = extent_y.max(gy.abs());
+    }
+
+    // 每边多留一格，保证边缘也有水印而不是刚好切在边界上
+    let count_x = (extent_x * 2.0 / spacing_x).ceil() as i32 + 2;
+    let count_y = (extent_y * 2.0 / spacing_y).ceil() as i32 + 2;
 
     let cx = canvas_width as f32 / 2.0;
     let cy = canvas_height as f32 / 2.0;
 
     let mut items = Vec::new();
 
-    for i in (-count_x / 2)..(count_x / 2 + 1) {
-        for j in (-count_y / 2)..(count_y / 2 + 1) {
-            let offset_x = if j % 2 == 0 { 0.0 } else { spacing_x * 0.5 };
+    // Rust 整数除法向零截断，`-count_x / 2` 会让范围左右不对称（少一列），
+    // 一列就是画布一侧整列缺失，因此显式取下界。
+    let x0 = -(count_x / 2);
+    let y0 = -(count_y / 2);
+
+    for i in x0..(x0 + count_x) {
+        for j in y0..(y0 + count_y) {
+            // 奇数行错开半格，让平铺更均匀。负数取模在 Rust 中恒非负，
+            // 用 rem_euclid 才能让上下两半错开方向一致。
+            let offset_x = if j.rem_euclid(2) == 0 { 0.0 } else { spacing_x * 0.5 };
             let grid_x = i as f32 * spacing_x + offset_x;
             let grid_y = j as f32 * spacing_y;
-
-            let dist = (grid_x * grid_x + grid_y * grid_y).sqrt();
-            if dist > radius {
-                continue;
-            }
 
             let rotated_x = grid_x * cos - grid_y * sin;
             let rotated_y = grid_x * sin + grid_y * cos;

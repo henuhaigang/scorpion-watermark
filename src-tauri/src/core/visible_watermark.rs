@@ -396,4 +396,107 @@ mod tests {
             );
         }
     }
+
+    /// 四角与四边中点到最近水印中心的距离，减去水印半尺寸。
+    /// 返回值 ≤ 0 表示该处被水印覆盖；正值即空白缺口。
+    fn worst_edge_gap(c: &VisibleWatermark) -> (f32, String) {
+        let w = 1200.0f32;
+        let h = 900.0f32;
+        let l = calculate_layout(w as u32, h as u32, c).unwrap();
+        let half = (l.text_width / 2.0).max(l.text_height / 2.0);
+        let pts = [
+            ("左上", 0.0, 0.0),
+            ("右上", w, 0.0),
+            ("左下", 0.0, h),
+            ("右下", w, h),
+            ("上边中点", w / 2.0, 0.0),
+            ("下边中点", w / 2.0, h),
+            ("左边中点", 0.0, h / 2.0),
+            ("右边中点", w, h / 2.0),
+        ];
+        let mut worst = f32::MIN;
+        let mut worst_name = String::new();
+        for (name, px, py) in pts {
+            let d = l
+                .items
+                .iter()
+                .map(|it| ((it.x - px).powi(2) + (it.y - py).powi(2)).sqrt())
+                .fold(f32::MAX, f32::min);
+            let gap = d - half;
+            if gap > worst {
+                worst = gap;
+                worst_name = name.to_string();
+            }
+        }
+        (worst, worst_name)
+    }
+
+    #[test]
+    fn test_no_blank_at_canvas_corners() {
+        // 网格在旋转坐标系下生成，早期按对角线估算行列数并按圆形半径裁剪，
+        // 导致画布四角落在裁剪边界上被剔掉，左上/右上出现空白。
+        // 字号越大、行距越大越明显（实测字号 96px 时左上缺 21.7px）。
+        for ratio in [0.5f32, 1.0, 3.0, 5.0, 6.0, 8.0] {
+            for angle in [-90.0f32, -45.0, -30.0, 0.0, 15.0, 45.0, 90.0] {
+                let mut c = test_config("机密文件");
+                c.font_size_ratio = ratio;
+                c.angle = angle;
+                let (gap, name) = worst_edge_gap(&c);
+                assert!(
+                    gap <= 0.0,
+                    "字号比例 {}、角度 {} 时 {} 有 {:.1}px 空白",
+                    ratio,
+                    angle,
+                    name,
+                    gap
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_no_blank_at_canvas_corners_multiline() {
+        // 多行块与不同行间距下同样不得留白
+        for ls in [0.0f32, 0.5, 1.5] {
+            for gap in [0.0f32, 1.0, 3.0] {
+                let mut c = test_config("仅供办理人保车险使用的时候此文件仅作内部使用");
+                c.line_spacing = ls;
+                c.block_gap_ratio = gap;
+                let (g, name) = worst_edge_gap(&c);
+                assert!(
+                    g <= 0.0,
+                    "行间距 {}、水印间距 {} 时 {} 有 {:.1}px 空白",
+                    ls,
+                    gap,
+                    name,
+                    g
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_grid_columns_not_missing() {
+        // Rust 整数除法向零截断，`-count_x / 2` 会让范围左右差一列，
+        // 即画布一侧整列缺失。这里检查左右跨度之差不超过一个间距
+        // （奇数行刻意错开半格，故允许半格误差）。
+        for angle in [-90.0f32, -45.0, -30.0, 0.0, 45.0, 90.0] {
+            let mut c = test_config("机密文件");
+            c.angle = angle;
+            let l = calculate_layout(1200, 900, &c).unwrap();
+            let cx = 600.0f32;
+            let min_x = l.items.iter().map(|i| i.x).fold(f32::MAX, f32::min);
+            let max_x = l.items.iter().map(|i| i.x).fold(f32::MIN, f32::max);
+            let left = cx - min_x;
+            let right = max_x - cx;
+            assert!(
+                (left - right).abs() <= l.text_width + 1.0,
+                "角度 {} 时左右跨度相差过大：左 {:.1} 右 {:.1}（字宽 {:.1}）",
+                angle,
+                left,
+                right,
+                l.text_width
+            );
+        }
+    }
 }
