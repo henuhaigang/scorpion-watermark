@@ -18,6 +18,7 @@ function normalizeConfig(config: WatermarkConfig): WatermarkConfig {
       opacity: clamp(config.visible.opacity, 0, 1),
       fontSizeRatio: clamp(config.visible.fontSizeRatio, 0.5, 5),
       lineSpacing: clamp(config.visible.lineSpacing, 0, 1.5),
+      blockGapRatio: clamp(config.visible.blockGapRatio ?? 1, 0, 3),
     },
   }
 }
@@ -39,6 +40,7 @@ const defaultConfig: WatermarkConfig = {
     fontSize: 12,
     fontSizeRatio: 3.0,
     lineSpacing: 0.5,
+    blockGapRatio: 1,
     color: '#000000',
     strokeColor: null,
     strokeWidth: 0,

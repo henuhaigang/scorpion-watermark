@@ -18,6 +18,7 @@ export interface ShadowConfig {
   blur: number
   offsetX: number
   offsetY: number
+  blockGap: number
 }
 
 export interface VisibleWatermark {
@@ -29,6 +30,8 @@ export interface VisibleWatermark {
   fontSize: number
   fontSizeRatio: number
   lineSpacing: number
+  /** 相邻水印块之间的间隙，相对字号的倍数（块内行距由 lineSpacing 控制） */
+  blockGapRatio: number
   color: string
   strokeColor: string | null
   strokeWidth: number

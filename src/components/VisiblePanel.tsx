@@ -138,6 +138,27 @@ export default function VisiblePanel() {
           onChange={(e) => updateVisible({ lineSpacing: Number(e.target.value) })}
           style={{ width: '100%' }}
         />
+        <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
+          同一块水印内多行文字之间的距离
+        </div>
+      </div>
+
+      <div style={{ marginBottom: '8px' }}>
+        <label style={{ display: 'block', fontSize: '12px', color: '#666', marginBottom: '4px' }}>
+          水印间距：{v.blockGapRatio}
+        </label>
+        <input
+          type="range"
+          min={0}
+          max={3}
+          step={0.05}
+          value={v.blockGapRatio}
+          onChange={(e) => updateVisible({ blockGapRatio: Number(e.target.value) })}
+          style={{ width: '100%' }}
+        />
+        <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
+          相邻水印块之间的距离（平铺时的疏密）
+        </div>
       </div>
 
       <div style={{ marginBottom: '8px' }}>

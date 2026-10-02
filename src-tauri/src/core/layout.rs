@@ -1,7 +1,8 @@
 use crate::core::config::VisibleWatermark;
 use crate::core::font::{
-    font, measure_text_width, missing_glyphs, scale_for, BLOCK_GAP_RATIO, COMFORTABLE_FONT_RATIO,
-    LINE_HEIGHT_BASE, MAX_FONT_RATIO, MAX_LINES, MAX_LINE_WIDTH_RATIO, MIN_FONT_RATIO,
+    font, measure_text_width, missing_glyphs, scale_for, BLOCK_GAP_MIN_OF_LINE,
+    COMFORTABLE_FONT_RATIO, LINE_HEIGHT_BASE, MAX_FONT_RATIO, MAX_LINES, MAX_LINE_WIDTH_RATIO,
+    MIN_FONT_RATIO,
 };
 use ab_glyph::{FontRef, PxScale};
 use serde::{Deserialize, Serialize};
@@ -17,6 +18,8 @@ pub struct LayoutResult {
     pub font_size: f32,
     /// 最宽一行的宽度（像素）
     pub text_width: f32,
+    /// 实际生效的块间距（像素），已含「不小于块内行距」的下限修正
+    pub block_gap: f32,
     /// 整个文字块（所有行）的高度（像素）
     pub text_height: f32,
     /// 以 `\n` 拼接的多行文本
@@ -46,6 +49,7 @@ pub fn calculate_layout(
             font_size: 0.0,
             text_width: 0.0,
             text_height: 0.0,
+            block_gap: 0.0,
             text: config.text.clone(),
             lines: vec![],
             font_auto_shrunk: false,
@@ -86,8 +90,11 @@ pub fn calculate_layout(
         .fold(0.0f32, f32::max);
     let text_height = line_height * lines.len() as f32;
 
-    // 间距基于字号，与文本长度解耦，长短文本的视觉密度保持一致
-    let gap = font_size * BLOCK_GAP_RATIO;
+    // 间距基于字号，与文本长度解耦，长短文本的视觉密度保持一致。
+    // 块间距不得小于块内行距，否则相邻块的文字会比同一块的行更密，
+    // 看起来像文字被拦腰截断。
+    let min_gap = line_height * BLOCK_GAP_MIN_OF_LINE;
+    let gap = (font_size * config.block_gap_ratio).max(min_gap);
     let spacing_x = text_width + gap;
     let spacing_y = text_height + gap;
 
@@ -133,6 +140,7 @@ pub fn calculate_layout(
         items,
         font_size,
         text_width,
+        block_gap: gap,
         text_height,
         text: lines.join("\n"),
         lines,

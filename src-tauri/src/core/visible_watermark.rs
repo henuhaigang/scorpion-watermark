@@ -51,6 +51,7 @@ pub fn apply_visible_watermark(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::core::font::LINE_HEIGHT_BASE;
     use crate::core::config::VisibleWatermark;
     use image::{Rgba, RgbaImage};
 
@@ -64,6 +65,7 @@ mod tests {
             font_size: 36.0,
             font_size_ratio: 3.0,
             line_spacing: 0.5,
+            block_gap_ratio: 1.0,
             color: "#000000".to_string(),
             stroke_color: None,
             stroke_width: 0.0,
@@ -303,5 +305,83 @@ mod tests {
         let min_alpha = out.pixels().map(|p| p.0[3]).min().unwrap();
         println!("min alpha after overlay: {}", min_alpha);
         assert_eq!(min_alpha, 255, "不透明底图叠加水印后 alpha 应保持 255");
+    }
+
+    #[test]
+    fn test_block_gap_is_independent_from_line_spacing() {
+        // 行间距与块间距是两个独立参数：行间距为 0 时块间距不应随之变化，
+        // 否则用户无法单独控制平铺疏密（曾因二者耦合导致「行间距调到 0 仍很松」）
+        let text = "机密文件";
+        let base = |ls: f32, gap: f32| {
+            let mut c = test_config(text);
+            c.line_spacing = ls;
+            c.block_gap_ratio = gap;
+            calculate_layout(1200, 900, &c).unwrap()
+        };
+        // 块间距 = max(字号×滑块值, 行高)，下限保证不小于块内行距
+        let expect = |ratio: f32, ls: f32| {
+            let l = base(ls, ratio);
+            let line_height = l.font_size * (LINE_HEIGHT_BASE + ls);
+            let want = (l.font_size * ratio).max(line_height * 1.0);
+            assert!(
+                (l.block_gap - want).abs() < 0.01,
+                "块间距应为 {}，实际 {}（滑块 {}，行间距 {}）",
+                want,
+                l.block_gap,
+                ratio,
+                ls
+            );
+        };
+        for ls in [0.0f32, 0.5, 1.5] {
+            for ratio in [0.0f32, 0.5, 1.0, 2.0, 3.0] {
+                expect(ratio, ls);
+            }
+        }
+
+        // 行间距变化不应直接改变块间距（除非触发了「不小于行高」兜底）
+        let lo = base(0.0, 1.0);
+        let hi = base(1.5, 3.0);
+        assert!(
+            hi.block_gap > lo.block_gap,
+            "块间距滑块应能放大间距：{} vs {}",
+            lo.block_gap,
+            hi.block_gap
+        );
+    }
+
+    #[test]
+    fn test_block_gap_never_smaller_than_line_height() {
+        // 块间距过小会让相邻块的文字比同一块的行更密，看起来像被拦腰截断，
+        // 因此低于行高时按行高兜底
+        let text = "机密文件";
+        let mut c = test_config(text);
+        c.line_spacing = 1.5;
+        c.block_gap_ratio = 0.0;
+        let l = calculate_layout(1200, 900, &c).unwrap();
+        let line_height = l.font_size * (LINE_HEIGHT_BASE + 1.5);
+        assert!(
+            l.block_gap >= line_height - 0.01,
+            "块间距 {} 不得小于行高 {}",
+            l.block_gap,
+            line_height
+        );
+    }
+
+    #[test]
+    fn test_line_spacing_zero_is_tightest_line_height() {
+        // 行间距 0 应给出最紧凑的行高（恰为一个字号）
+        let text = "仅供办理人保车险使用的时候此文件仅作内部使用";
+        let mut c = test_config(text);
+        c.line_spacing = 0.0;
+        let l = calculate_layout(1200, 900, &c).unwrap();
+        let expected = l.font_size * l.lines.len() as f32;
+        assert!(
+            (l.text_height - expected).abs() < 0.01,
+            "行间距 0 时行高应恰为一个字号，实际 text_height={} 期望={} font={} lines={}",
+            l.text_height,
+            expected,
+            l.font_size,
+            l.lines.len()
+        );
     }
 }
