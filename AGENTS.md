@@ -63,8 +63,22 @@ PolyForm Noncommercial License 1.0.0（见 LICENSE）：可自由使用/复制/�
   与行间距相互独立。**语义是「留多少空白」，0 = 紧贴，不设下限** —— 早期用
   `max(字号×滑块值, 行高)` 兜底，导致滑块拉到 0 仍残留一个行高，已移除
   - 语义是「额外行距」而非「行高倍数」：倍数写法下行间距 0 会让行高归零导致重叠
-- 字号一律经 `font.rs` 的 `scale_for()` 转换：`PxScale` 是行框高度，而界面字号是 em 字号，
-  两者对多数中文字体并不相等（Noto Sans SC 行框是 1448/1000），直接 `PxScale::from()` 会偏小 30%
+### 字号与行高的三套基准（最容易出错的地方）
+同一个「字号」在三处语义不同，混用就会出现偏移，且**字号越大越严重**：
+
+| 位置 | 语义 | 正确写法 |
+|---|---|---|
+| Rust `ab_glyph::PxScale` | **像素**行框高度 | 经 `font.rs` 的 `scale_for()` 转换 |
+| Rust 内部 `line_height` | **像素** | `font_size * (LINE_HEIGHT_BASE + line_spacing)` |
+| **Konva `lineHeight`** | **倍数**，内部再乘 fontSize | 只传 `LINE_HEIGHT_BASE + lineSpacing` |
+
+- `scale_for()`：`PxScale` 是行框高度，界面字号是 em 字号，两者对多数中文字体
+  并不相等（Noto Sans SC 行框是 1448/1000），直接 `PxScale::from()` 会偏小 30%
+- Konva 见 `konva/lib/shapes/Text.js`：`lineHeightPx = lineHeight * fontSize`。
+  **传像素值会被再乘一次 fontSize**，实际行高放大 fontSize 倍，表现为
+  「画布一角有空白，只有缩小字体才正常」
+- 预览与导出共用后端算出的 `items` 坐标，但渲染基准不同：Rust 侧按像素行高，
+  Konva 按倍数行高。改行距公式时**两边都要改**，否则预览与导出不一致
 - 竖直间距用**墨迹高度** `字号 + (行数-1)×行高`，不是行框高度 `行高×行数`。
   单行块若按行框算，gap=0 也会多出半个行高的空白
 - 文字任何情况下都不截断，宁可换行或缩小字号

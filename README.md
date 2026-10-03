@@ -244,6 +244,32 @@ extent = 画布四角逆旋转到网格坐标后，x/y 绝对值的最大值
 （即画布一侧整列缺失），需显式取下界。奇数行错开半格时用 `rem_euclid`
 而非 `%`，否则负数行与正数行的错开方向不一致。
 
+### 预览与导出的行高基准不同（易踩坑）
+
+同一个「字号」在三处语义不同，混用会导致**字号越大偏移越严重**：
+
+| 位置 | `lineHeight` / `PxScale` 语义 |
+|---|---|
+| Rust `ab_glyph::PxScale` | 像素行框高度 |
+| Rust 内部 `line_height` | 像素 |
+| **Konva `lineHeight`** | **倍数**（内部再乘 `fontSize`） |
+
+Konva 的定义见 `konva/lib/shapes/Text.js`：
+`lineHeightPx = lineHeight * fontSize`。
+
+若按像素传进去，实际行高会被**再乘一次 fontSize** —— 例如字号 96px 时行高变成
+9216px，水印整体被推出画布，表现为「左上方有很大空白，只有缩小字体才正常」。
+
+```tsx
+// 错：传了像素值
+lineHeight={layout.font_size * (LINE_HEIGHT_BASE + lineSpacing)}
+// 对：传倍数
+lineHeight={LINE_HEIGHT_BASE + Math.max(lineSpacing, 0)}
+```
+
+预览与导出共用后端算出的 `items` 坐标，因此**网格位置一致**，但渲染基准不同。
+排查「预览有空白、导出正常」这类问题时，先确认渲染端的单位语义。
+
 ### 为什么需要 `WIDTH_TOLERANCE`
 
 字号恰好等于「宽度上限 ÷ 每行字数」时，累计宽度会因浮点误差略微超出上限。

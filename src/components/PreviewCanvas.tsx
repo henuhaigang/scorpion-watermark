@@ -167,7 +167,11 @@ export default function PreviewCanvas({ filePath }: PreviewCanvasProps) {
   const watermarkElements = useMemo(() => {
     if (!layout || !config.visible.enabled || !config.visible.text) return null
 
-    const lineHeight = layout.font_size * (LINE_HEIGHT_BASE + Math.max(config.visible.lineSpacing, 0))
+    // Konva 的 lineHeight 是**倍数**（内部再乘 fontSize 得到像素行高），
+    // 见 konva/lib/shapes/Text.js: lineHeightPx = lineHeight * fontSize。
+    // 早前误传像素值，导致实际行高被放大 fontSize 倍：字号越大偏移越严重，
+    // 表现为「画布一角有空白，只有缩小字体才正常」。
+    const lineHeight = LINE_HEIGHT_BASE + Math.max(config.visible.lineSpacing, 0)
 
     return layout.items.map((item, index) => (
       <Text
@@ -182,7 +186,7 @@ export default function PreviewCanvas({ filePath }: PreviewCanvasProps) {
         opacity={config.visible.opacity}
         rotation={item.rotation}
         offsetX={layout.text_width / 2}
-        offsetY={layout.text_height / 2}
+        offsetY={(lineHeight * layout.font_size * layout.lines.length) / 2}
       />
     ))
   }, [layout, config.visible])
