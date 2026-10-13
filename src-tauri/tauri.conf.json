@@ -4,8 +4,8 @@
   "identifier": "com.scorpion.watermark",
   "build": {
     "frontendDist": "../dist",
-    "devUrl": "http://localhost:1420",
-    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://0.0.0.0:1420",
+    "beforeDevCommand": "npm run dev -- --host 0.0.0.0",
     "beforeBuildCommand": "npm run build"
   },
   "app": {
@@ -28,13 +28,14 @@
       "app"
     ],
     "shortDescription": "本地离线的图片水印工具",
-    "longDescription": "为图片添加斜向平铺可见文字水印与隐形水印，导出时自动剥离 EXIF/GPS 等隐私元数据。完全本地离线处理，不发起任何网络请求。",
+    "longDescription": "为图片添加斜向平铺可见文字水印，导出时自动剥离 EXIF/GPS 等隐私元数据。完全本地离线处理，不发起任何网络请求。",
     "copyright": "Copyright (c) 2026 Scorpion",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
-      "icons/icon.icns"
+      "icons/icon.icns",
+      "icons/icon.png"
     ],
     "macOS": {
       "minimumSystemVersion": "11.0",

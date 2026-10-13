@@ -18,12 +18,14 @@ PolyForm Noncommercial License 1.0.0（见 LICENSE）：可自由使用/复制/�
 
 ## 技术栈
 - 桌面框架：Tauri v2（Universal Binary，macOS 11.0+）
+- 移动端：iOS 15.0+ / Android API 24+（Tauri v2 mobile_entry_point）
 - 前端：React 18 + TypeScript + Vite + Zustand + react-konva
 - 后端：Rust 2021 edition
 - 图像处理：image, imageproc, ab_glyph
 - PDF：lopdf
 - 隐形水印：blind_watermark（DWT-DCT-SVD）—— **当前不可用**，依赖已移除
 - 元数据清理：kamadak-exif, img-parts
+- EXIF 方向纠正：exif crate
 
 ## 代码规范
 - Rust：遵循 clippy 建议，错误用 Result<T, String> 返回给前端

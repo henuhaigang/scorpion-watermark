@@ -1,6 +1,6 @@
 # Scorpion Watermark 蝎子水印
 
-macOS 桌面水印工具。为图片添加斜向平铺的可见文字水印，导出时自动剥离 EXIF/GPS 等隐私元数据。
+macOS / iOS / Android 跨平台水印工具。为图片添加斜向平铺的可见文字水印，导出时自动剥离 EXIF/GPS 等隐私元数据。
 
 **完全本地离线处理，不发起任何网络请求。**
 
@@ -58,13 +58,16 @@ python3 scripts/build_font.py /path/to/你的开源中文字体.otf
 | 自动剥离元数据 | ✅ 可用 | 输出不含 EXIF/GPS/IPTC/XMP |
 | 预设模板保存/加载/删除 | ✅ 可用 | 参数以 JSON 持久化 |
 | JPG / PNG / WebP / GIF | ✅ 可用 | |
-| HEIC | ⚠️ 仅 macOS | 走系统 ImageIO，其他平台会明确报错 |
+| HEIC | ✅ 可用 | macOS/iOS 走系统 ImageIO，Android 需额外集成 |
+| 图片 EXIF 自动纠正方向 | ✅ 可用 | 读取 Orientation 标签自动旋转 |
 | 单点模式 + 九宫格定位 | ⚠️ 部分可用 | UI 只有「居中」，其余位置与自定义坐标未接入 |
 | 鉴定 / 追责功能 | ❌ 未实现 | 依赖隐形水印，一并不可用 |
 | 透明 PNG 导出为 JPEG | ✅ 可用 | 自动合成到不透明底图 |
 | 隐形水印（嵌入 / 提取） | ❌ 不可用 | 底层库提取功能失效，UI 已移除入口，见「已知限制」 |
 | PDF 水印 | ❌ 存在严重缺陷 | 会**覆盖原页面内容**，见「已知限制」 |
 | 描边 / 阴影 | ❌ 未实现 | 配置结构里有字段，但渲染未实现 |
+| Android 支持 | ⚠️ 配置就绪 | tauri.conf.json 已含 Android bundle 配置，待实机验证 |
+| iOS 支持 | ✅ 可用 | 相册选择、拍照、文件选择、预览、导出全功能可用 |
 
 ---
 
@@ -82,6 +85,18 @@ cd scorpion-watermark
 npm install
 npm run tauri dev
 ```
+
+#### 移动端构建
+
+```bash
+# Android (需要 Android SDK、NDK)
+npm run tauri android build
+
+# iOS (需要 Xcode、Apple Developer 账号)
+npm run tauri ios build
+```
+
+> **注意**：移动端配置文件为 `src-tauri/tauri.android.conf.json` 和 `src-tauri/tauri.ios.conf.json`，Tauri CLI 会自动合并。首次构建需先运行 `npm run tauri android init` / `npm run tauri ios init` 初始化项目。
 
 ### 基本流程
 
@@ -326,6 +341,7 @@ UI 入口已移除。
 - 描边（`strokeColor` / `strokeWidth`）与阴影（`shadow`）配置字段存在但渲染未实现
 - 单点模式仅接通「居中」，其余八宫格位置与自定义坐标未实现
 - 应用无自动更新、无代码签名，macOS 首次运行需在「系统设置 → 隐私与安全性」中放行
+- iOS 模拟器需手动允许相册权限（系统弹窗），真机需在「设置 → 隐私与安全性 → 照片」中授权
 
 ---
 

@@ -19,6 +19,8 @@ pub fn run() {
             commands::preset::load_preset,
             commands::preset::delete_preset,
             commands::preset::list_presets,
+            commands::image_picker::pick_image,
+            commands::image_picker::test_ipc,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -82,11 +82,13 @@ export default function PreviewCanvas({ filePath }: PreviewCanvasProps) {
     invoke<number[]>('generate_preview', { path: filePath })
       .then((bytes) => {
         if (cancelled) return
+        console.log('[PreviewCanvas] generate_preview returned', bytes.length, 'bytes')
         const blob = new Blob([new Uint8Array(bytes)], { type: 'image/jpeg' })
         const url = URL.createObjectURL(blob)
         const img = new window.Image()
         img.onload = () => {
           if (!cancelled) {
+            console.log('[PreviewCanvas] Image loaded:', img.naturalWidth, 'x', img.naturalHeight)
             setImage(img)
             setImageSize({ width: img.naturalWidth, height: img.naturalHeight })
             setLoading(false)
@@ -104,6 +106,7 @@ export default function PreviewCanvas({ filePath }: PreviewCanvasProps) {
       })
       .catch((err) => {
         if (!cancelled) {
+          console.error('[PreviewCanvas] generate_preview error:', err)
           setError(String(err))
           setLoading(false)
         }
@@ -193,7 +196,7 @@ export default function PreviewCanvas({ filePath }: PreviewCanvasProps) {
 
   if (!filePath) {
     return (
-      <div style={{ color: '#999', fontSize: '16px' }}>
+      <div style={{ color: '#999', fontSize: '16px', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
         选择文件以预览
       </div>
     )
@@ -201,7 +204,7 @@ export default function PreviewCanvas({ filePath }: PreviewCanvasProps) {
 
   if (loading) {
     return (
-      <div style={{ color: '#666', fontSize: '14px' }}>
+      <div style={{ color: '#666', fontSize: '14px', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
         加载预览中...
       </div>
     )
@@ -209,14 +212,14 @@ export default function PreviewCanvas({ filePath }: PreviewCanvasProps) {
 
   if (error) {
     return (
-      <div style={{ color: '#d32f2f', fontSize: '14px' }}>
+      <div style={{ color: '#d32f2f', fontSize: '14px', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
         错误：{error}
       </div>
     )
   }
 
   return (
-    <div style={{ maxWidth: '100%', maxHeight: '100%', overflow: 'auto' }}>
+    <div style={{ maxWidth: '100%', maxHeight: '100%' }}>
       <Stage width={stageSize.width} height={stageSize.height}>
         <Layer>
           {image && (

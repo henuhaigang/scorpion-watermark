@@ -6,7 +6,7 @@
 **项目代号**：scorpion-watermark
 **目标**：macOS 桌面端水印工具，支持图片和 PDF 的可见水印与隐形水印，要求本地离线处理，跨平台架构可扩展。
 
-**平台**：macOS 11.0+（Intel + Apple Silicon Universal Binary）
+**平台**：macOS 11.0+（Intel + Apple Silicon Universal Binary）、iOS 15.0+、Android API 24+
 **技术栈**：Tauri v2 + Rust（后端）+ React + TypeScript + Vite（前端）
 
 ## 2. 功能需求
@@ -23,7 +23,7 @@
 
 ### 2.2 一期不做的
 
-批量处理、视频水印、Word 水印、iOS/Windows 端、动态水印。
+批量处理、视频水印、Word 水印、Windows 端、动态水印。
 
 ### 2.3 关键交互细节
 
@@ -41,8 +41,12 @@ scorpion-watermark/
 ├── AGENTS.md                  # OpenCode 项目规则
 ├── src-tauri/
 │   ├── Cargo.toml
-│   ├── tauri.conf.json
+│   ├── tauri.conf.json        # 主配置（桌面端）
+│   ├── tauri.android.conf.json   # Android 专用配置（CLI 自动合并）
+│   ├── tauri.ios.conf.json       # iOS 专用配置（CLI 自动合并）
 │   ├── capabilities/
+│   ├── gen/
+│   │   └── apple/ScorpionWatermark/Resources/LaunchScreen.storyboard
 │   └── src/
 │       ├── main.rs
 │       ├── lib.rs
@@ -51,7 +55,8 @@ scorpion-watermark/
 │       │   ├── file.rs        # 打开/读取文件
 │       │   ├── preview.rs     # 生成预览缩略图
 │       │   ├── export.rs      # 导出处理后的文件
-│       │   └── preset.rs      # 预设模板 CRUD
+│       │   ├── preset.rs      # 预设模板 CRUD
+│       │   └── image_picker.rs # 移动端图片选择（相册/相机/文件）
 │       └── core/
 │           ├── mod.rs
 │           ├── config.rs      # WatermarkConfig 数据结构
@@ -165,3 +170,40 @@ PDF 路径类似，但使用 `lopdf` 加载，为每页追加内容流绘制旋�
 | M5 | 隐形水印嵌入 + 提取验证 | 裁剪/重压缩后仍可提取 |
 | M6 | 预设模板 CRUD | 保存后重启应用仍可加载 |
 | M7 | 打磨、签名、公证 | 可分发 DMG |
+| M8 | Android 支持 | `npm run tauri android build` 生成 APK/AAB，实机可运行 |
+| M9 | iOS 支持 | `npm run tauri ios build` 生成 IPA，TestFlight 可分发 |
+
+## 5. 移动端构建配置
+
+### 5.1 Android
+
+- 配置文件：`src-tauri/tauri.android.conf.json`
+- 图标：`src-tauri/icons/android/mipmap-*/ic_launcher.png`
+- 权限：INTERNET、READ_EXTERNAL_STORAGE、WRITE_EXTERNAL_STORAGE、READ_MEDIA_IMAGES、READ_MEDIA_VIDEO
+- 最低 SDK：24 (Android 7.0)
+- 目标 SDK：34 (Android 14)
+- 构建命令：`npm run tauri android build`
+
+### 5.2 iOS
+
+- 配置文件：`src-tauri/tauri.ios.conf.json`
+- 图标：`src-tauri/icons/ios/Icon-*.png` (9 种尺寸)
+- 启动屏：`src-tauri/gen/apple/ScorpionWatermark/Resources/LaunchScreen.storyboard`
+- 最低版本：iOS 15.0
+- 构建命令：`npm run tauri ios build`
+- 权限：`NSPhotoLibraryUsageDescription`、`NSCameraUsageDescription`（Info.plist 已配置）
+
+### 5.3 通用说明
+
+- 移动端使用 Tauri v2 的 `mobile_entry_point`，入口在 `src-tauri/src/lib.rs`
+- 前端通过 `window.innerWidth < 768` 检测移动端，渲染自适应布局（`src/App.tsx`）
+- 图片选择使用统一接口 `pick_image`（`src-tauri/src/commands/image_picker.rs`），支持 Gallery/Camera/File 三种来源
+- iOS 需在 `build.rs` 链接 PhotosUI、Photos、UIKit、MobileCoreServices 框架
+- 开发模式：`npm run tauri ios dev -- "iPhone 16"`（指定模拟器设备）
+
+### 5.4 图片选择与导出关键修复
+
+- **EXIF 方向自动纠正**：`src-tauri/src/core/image_loader.rs` 读取 JPEG EXIF Orientation 标签并自动旋转，解决竖拍图片横向显示问题
+- **导出 0KB 修复**：`src-tauri/src/commands/export.rs` 处理 iOS 文件选择器返回的 `file://` URL，正确转换为本地路径
+- **自定义文件名**：用户在保存对话框中修改的文件名会被保留，仅强制扩展名匹配输出格式
+- **Config 字段完整性**：导出时显式传递 `{ visible, invisible, output }` 三个字段，修复 "missing field 'visible'" 错误

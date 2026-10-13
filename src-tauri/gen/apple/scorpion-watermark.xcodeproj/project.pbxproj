@@ -1,0 +1,409 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 54;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0D2313F366F87CF129D213D4 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DDA69A07444E61145DEEC10F /* QuartzCore.framework */; };
+		3E356028FF9F39F63BE57C41 /* libapp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9BB2087D341E9D7F7070069D /* libapp.a */; };
+		4203E30016158758FFCD984A /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FE79C6F29C9D6EDE4813422C /* Metal.framework */; };
+		4ED1A380E11FA313F688C023 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 01876855DA867245257D2D2F /* Security.framework */; };
+		5763227D53665654DC830726 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EE7653A51F0559DE2F74268B /* CoreGraphics.framework */; };
+		6B5E02B316DC5C001F039B13 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B59493424FDBA448A43F17AE /* UIKit.framework */; };
+		7E582EBFB43CAE73E88372A9 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 444F5EB981F0CF4CF85C7921 /* main.mm */; };
+		9469B5AF96CC920324B0BF17 /* assets in Resources */ = {isa = PBXBuildFile; fileRef = B7FF246DC4121CBEFB4BA7A4 /* assets */; };
+		94B6C3F2F46F713C61FBDFDA /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7998079C5EE1D53C77DDCD02 /* WebKit.framework */; };
+		BD6F9625BDDFEDE1208A820D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D18DF85364E248F6DE724F90 /* Assets.xcassets */; };
+		C7AD37F2D5AB8A594F4018B2 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 88F1CD958DBA10A6FF4BAF09 /* MetalKit.framework */; };
+		E21D4E0A8725DF8845F3676B /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 33868B308BD689A322446F0C /* LaunchScreen.storyboard */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		01876855DA867245257D2D2F /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		075D7DEB0A9122DC6D1EA51B /* metadata_cleaner.rs */ = {isa = PBXFileReference; path = metadata_cleaner.rs; sourceTree = "<group>"; };
+		20E68DBBF0354E081170FC4D /* file.rs */ = {isa = PBXFileReference; path = file.rs; sourceTree = "<group>"; };
+		2BCD11995F14AFD6A8D3989E /* bindings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bindings.h; sourceTree = "<group>"; };
+		30CF74484E6781BDC3290971 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		33868B308BD689A322446F0C /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		444F5EB981F0CF4CF85C7921 /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
+		47FE464076C9C0A9EB36B1D5 /* mod.rs */ = {isa = PBXFileReference; path = mod.rs; sourceTree = "<group>"; };
+		4E2003A404FA72EA71108AF2 /* preset.rs */ = {isa = PBXFileReference; path = preset.rs; sourceTree = "<group>"; };
+		577CBEE85F05BA12BA0C833D /* image_loader.rs */ = {isa = PBXFileReference; path = image_loader.rs; sourceTree = "<group>"; };
+		5830E4ED0C575CB7DC411E97 /* invisible_watermark.rs */ = {isa = PBXFileReference; path = invisible_watermark.rs; sourceTree = "<group>"; };
+		59969E747F87E73C65AB2FA0 /* pdf_watermark.rs */ = {isa = PBXFileReference; path = pdf_watermark.rs; sourceTree = "<group>"; };
+		5D0596DEF23B2ECA2C85BCCE /* preview.rs */ = {isa = PBXFileReference; path = preview.rs; sourceTree = "<group>"; };
+		7454C9FA87B2F7BAE7E64EE5 /* text_renderer.rs */ = {isa = PBXFileReference; path = text_renderer.rs; sourceTree = "<group>"; };
+		74CB3A10B66680738282B4EA /* mod.rs */ = {isa = PBXFileReference; path = mod.rs; sourceTree = "<group>"; };
+		76EB4DC3A36A0EA189112312 /* wm_payload.rs */ = {isa = PBXFileReference; path = wm_payload.rs; sourceTree = "<group>"; };
+		7998079C5EE1D53C77DDCD02 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
+		8449E391203C39D1081E7733 /* heic_io.rs */ = {isa = PBXFileReference; path = heic_io.rs; sourceTree = "<group>"; };
+		88F1CD958DBA10A6FF4BAF09 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
+		8DA851A36C2F03FADDC4D41F /* layout.rs */ = {isa = PBXFileReference; path = layout.rs; sourceTree = "<group>"; };
+		90A23E4EBF90DE7738927498 /* scorpion-watermark_iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "scorpion-watermark_iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		975EECC93E3554B4260AC0AA /* lib.rs */ = {isa = PBXFileReference; path = lib.rs; sourceTree = "<group>"; };
+		99F68E14B711C3441E59451D /* invisible.rs */ = {isa = PBXFileReference; path = invisible.rs; sourceTree = "<group>"; };
+		9BB2087D341E9D7F7070069D /* libapp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libapp.a; sourceTree = "<group>"; };
+		9C04C5F4DF5F9AE072B7E904 /* pipeline.rs */ = {isa = PBXFileReference; path = pipeline.rs; sourceTree = "<group>"; };
+		A2CD1C3FFC3C7EF71791BA1B /* scorpion-watermark_iOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "scorpion-watermark_iOS.entitlements"; sourceTree = "<group>"; };
+		B59493424FDBA448A43F17AE /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		B7FF246DC4121CBEFB4BA7A4 /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; path = assets; sourceTree = SOURCE_ROOT; };
+		C6CD940CF1DC2296035B5811 /* main.rs */ = {isa = PBXFileReference; path = main.rs; sourceTree = "<group>"; };
+		C738BB22781444FB6654A816 /* export.rs */ = {isa = PBXFileReference; path = export.rs; sourceTree = "<group>"; };
+		D18DF85364E248F6DE724F90 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		DDA69A07444E61145DEEC10F /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		DF8739DD1B149B6DC7DC3E87 /* font.rs */ = {isa = PBXFileReference; path = font.rs; sourceTree = "<group>"; };
+		E13A7FD84F5E96089CC9E61D /* config.rs */ = {isa = PBXFileReference; path = config.rs; sourceTree = "<group>"; };
+		E1A11F10F8AA58AE5242B4C5 /* image_picker.rs */ = {isa = PBXFileReference; path = image_picker.rs; sourceTree = "<group>"; };
+		EE7653A51F0559DE2F74268B /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		F2FBB371244B2E7CBDFAAA95 /* visible_watermark.rs */ = {isa = PBXFileReference; path = visible_watermark.rs; sourceTree = "<group>"; };
+		FE79C6F29C9D6EDE4813422C /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		F133CB0E0DB1B108EC3EEC1B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3E356028FF9F39F63BE57C41 /* libapp.a in Frameworks */,
+				5763227D53665654DC830726 /* CoreGraphics.framework in Frameworks */,
+				4203E30016158758FFCD984A /* Metal.framework in Frameworks */,
+				C7AD37F2D5AB8A594F4018B2 /* MetalKit.framework in Frameworks */,
+				0D2313F366F87CF129D213D4 /* QuartzCore.framework in Frameworks */,
+				4ED1A380E11FA313F688C023 /* Security.framework in Frameworks */,
+				6B5E02B316DC5C001F039B13 /* UIKit.framework in Frameworks */,
+				94B6C3F2F46F713C61FBDFDA /* WebKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		428F40E428DF7B62B0BF3224 /* bindings */ = {
+			isa = PBXGroup;
+			children = (
+				2BCD11995F14AFD6A8D3989E /* bindings.h */,
+			);
+			path = bindings;
+			sourceTree = "<group>";
+		};
+		4E433A77405CB517B4717DEA /* commands */ = {
+			isa = PBXGroup;
+			children = (
+				C738BB22781444FB6654A816 /* export.rs */,
+				20E68DBBF0354E081170FC4D /* file.rs */,
+				E1A11F10F8AA58AE5242B4C5 /* image_picker.rs */,
+				99F68E14B711C3441E59451D /* invisible.rs */,
+				47FE464076C9C0A9EB36B1D5 /* mod.rs */,
+				4E2003A404FA72EA71108AF2 /* preset.rs */,
+				5D0596DEF23B2ECA2C85BCCE /* preview.rs */,
+			);
+			path = commands;
+			sourceTree = "<group>";
+		};
+		5F4A04C8ACD2F421D1144B86 /* scorpion-watermark_iOS */ = {
+			isa = PBXGroup;
+			children = (
+				30CF74484E6781BDC3290971 /* Info.plist */,
+				A2CD1C3FFC3C7EF71791BA1B /* scorpion-watermark_iOS.entitlements */,
+			);
+			path = "scorpion-watermark_iOS";
+			sourceTree = "<group>";
+		};
+		6F4B67EF1DD458BA53008891 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				975EECC93E3554B4260AC0AA /* lib.rs */,
+				C6CD940CF1DC2296035B5811 /* main.rs */,
+				4E433A77405CB517B4717DEA /* commands */,
+				E97BD1AE940D886607D7DE2C /* core */,
+			);
+			name = src;
+			path = ../../src;
+			sourceTree = "<group>";
+		};
+		ACBEC5B4E2C0B2D4839365FD /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				90A23E4EBF90DE7738927498 /* scorpion-watermark_iOS.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		BB44C26F6CCA0BA8667D338A /* scorpion-watermark */ = {
+			isa = PBXGroup;
+			children = (
+				444F5EB981F0CF4CF85C7921 /* main.mm */,
+				428F40E428DF7B62B0BF3224 /* bindings */,
+			);
+			path = "scorpion-watermark";
+			sourceTree = "<group>";
+		};
+		BC61102257D0B46B26227DC4 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				BB44C26F6CCA0BA8667D338A /* scorpion-watermark */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		BE68EE398EC83AAC96947FC9 = {
+			isa = PBXGroup;
+			children = (
+				B7FF246DC4121CBEFB4BA7A4 /* assets */,
+				D18DF85364E248F6DE724F90 /* Assets.xcassets */,
+				33868B308BD689A322446F0C /* LaunchScreen.storyboard */,
+				E48737682FD7F831A5B9B3D0 /* Externals */,
+				5F4A04C8ACD2F421D1144B86 /* scorpion-watermark_iOS */,
+				BC61102257D0B46B26227DC4 /* Sources */,
+				6F4B67EF1DD458BA53008891 /* src */,
+				FB088F0974E1434B4E7B3EF9 /* Frameworks */,
+				ACBEC5B4E2C0B2D4839365FD /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		E48737682FD7F831A5B9B3D0 /* Externals */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Externals;
+			sourceTree = "<group>";
+		};
+		E97BD1AE940D886607D7DE2C /* core */ = {
+			isa = PBXGroup;
+			children = (
+				E13A7FD84F5E96089CC9E61D /* config.rs */,
+				DF8739DD1B149B6DC7DC3E87 /* font.rs */,
+				8449E391203C39D1081E7733 /* heic_io.rs */,
+				577CBEE85F05BA12BA0C833D /* image_loader.rs */,
+				5830E4ED0C575CB7DC411E97 /* invisible_watermark.rs */,
+				8DA851A36C2F03FADDC4D41F /* layout.rs */,
+				075D7DEB0A9122DC6D1EA51B /* metadata_cleaner.rs */,
+				74CB3A10B66680738282B4EA /* mod.rs */,
+				59969E747F87E73C65AB2FA0 /* pdf_watermark.rs */,
+				9C04C5F4DF5F9AE072B7E904 /* pipeline.rs */,
+				7454C9FA87B2F7BAE7E64EE5 /* text_renderer.rs */,
+				F2FBB371244B2E7CBDFAAA95 /* visible_watermark.rs */,
+				76EB4DC3A36A0EA189112312 /* wm_payload.rs */,
+			);
+			path = core;
+			sourceTree = "<group>";
+		};
+		FB088F0974E1434B4E7B3EF9 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				EE7653A51F0559DE2F74268B /* CoreGraphics.framework */,
+				9BB2087D341E9D7F7070069D /* libapp.a */,
+				FE79C6F29C9D6EDE4813422C /* Metal.framework */,
+				88F1CD958DBA10A6FF4BAF09 /* MetalKit.framework */,
+				DDA69A07444E61145DEEC10F /* QuartzCore.framework */,
+				01876855DA867245257D2D2F /* Security.framework */,
+				B59493424FDBA448A43F17AE /* UIKit.framework */,
+				7998079C5EE1D53C77DDCD02 /* WebKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		"TEMP_05B495DC-B2DD-4FF4-8D09-2C08F2BFB718" /* x86_64 */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = x86_64;
+			sourceTree = "<group>";
+		};
+		"TEMP_A6A7D7A7-2A60-4598-97A6-5950EAA15C73" /* arm64 */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = arm64;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		DD61FE4589BDEED061BF8A9B /* scorpion-watermark_iOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 12110D3048A138489DEB5C71 /* Build configuration list for PBXNativeTarget "scorpion-watermark_iOS" */;
+			buildPhases = (
+				5F3143DAB346B8CC4DCB00BE /* Build Rust Code */,
+				AAD80041494B31AD23702466 /* Sources */,
+				02EDA5A2810DBB8FB3AF1F83 /* Resources */,
+				F133CB0E0DB1B108EC3EEC1B /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "scorpion-watermark_iOS";
+			productName = "scorpion-watermark_iOS";
+			productReference = 90A23E4EBF90DE7738927498 /* scorpion-watermark_iOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		324B827F59FEBB56D7D74F30 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+				};
+			};
+			buildConfigurationList = B9C8050390265E731E92EB7C /* Build configuration list for PBXProject "scorpion-watermark" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = BE68EE398EC83AAC96947FC9;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				DD61FE4589BDEED061BF8A9B /* scorpion-watermark_iOS */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		02EDA5A2810DBB8FB3AF1F83 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BD6F9625BDDFEDE1208A820D /* Assets.xcassets in Resources */,
+				E21D4E0A8725DF8845F3676B /* LaunchScreen.storyboard in Resources */,
+				9469B5AF96CC920324B0BF17 /* assets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		5F3143DAB346B8CC4DCB00BE /* Build Rust Code */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Build Rust Code";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/Externals/x86_64/${CONFIGURATION}/libapp.a",
+				"$(SRCROOT)/Externals/arm64/${CONFIGURATION}/libapp.a",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "npm run -- tauri ios xcode-script -v --platform \"${PLATFORM_DISPLAY_NAME:?}\" --sdk-root \"${SDKROOT:?}\" --framework-search-paths \"${FRAMEWORK_SEARCH_PATHS:?}\" --header-search-paths \"${HEADER_SEARCH_PATHS:?}\" --gcc-preprocessor-definitions \"${GCC_PREPROCESSOR_DEFINITIONS:-}\" --configuration \"${CONFIGURATION:?}\" ${FORCE_COLOR} ${ARCHS:?}\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		AAD80041494B31AD23702466 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7E582EBFB43CAE73E88372A9 /* main.mm in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		227AC209228AB9FFB5DC1F80 /* release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				SDKROOT = iphoneos;
+			};
+			name = release;
+		};
+		3F6EB636B6A3E2AF837B9291 /* release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ARCHS = (
+					arm64,
+				);
+				CODE_SIGN_ENTITLEMENTS = "scorpion-watermark_iOS/scorpion-watermark_iOS.entitlements";
+				ENABLE_BITCODE = NO;
+				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\".\"",
+				);
+				INFOPLIST_FILE = "scorpion-watermark_iOS/Info.plist";
+				"LIBRARY_SEARCH_PATHS[arch=arm64]" = "$(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
+				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = "$(inherited) $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.scorpion.watermark;
+				PRODUCT_NAME = "Scorpion Watermark";
+				SWIFT_VERSION = 5.0;
+				VALID_ARCHS = arm64;
+			};
+			name = release;
+		};
+		449C2DDF95F1BBF33DA37E96 /* debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				SDKROOT = iphoneos;
+			};
+			name = debug;
+		};
+		6AB1EBBB91440DAB775593B8 /* debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ARCHS = (
+					arm64,
+				);
+				CODE_SIGN_ENTITLEMENTS = "scorpion-watermark_iOS/scorpion-watermark_iOS.entitlements";
+				ENABLE_BITCODE = NO;
+				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\".\"",
+				);
+				INFOPLIST_FILE = "scorpion-watermark_iOS/Info.plist";
+				"LIBRARY_SEARCH_PATHS[arch=arm64]" = "$(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
+				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = "$(inherited) $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.scorpion.watermark;
+				PRODUCT_NAME = "Scorpion Watermark";
+				SWIFT_VERSION = 5.0;
+				VALID_ARCHS = arm64;
+			};
+			name = debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		12110D3048A138489DEB5C71 /* Build configuration list for PBXNativeTarget "scorpion-watermark_iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6AB1EBBB91440DAB775593B8 /* debug */,
+				3F6EB636B6A3E2AF837B9291 /* release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = debug;
+		};
+		B9C8050390265E731E92EB7C /* Build configuration list for PBXProject "scorpion-watermark" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				449C2DDF95F1BBF33DA37E96 /* debug */,
+				227AC209228AB9FFB5DC1F80 /* release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 324B827F59FEBB56D7D74F30 /* Project object */;
+}

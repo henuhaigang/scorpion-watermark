@@ -15,19 +15,37 @@ export default function OutputPanel({ filePath }: OutputPanelProps) {
   const [exportSuccess, setExportSuccess] = useState(false)
 
   const handleExport = async () => {
-    if (!filePath) return
+    console.log('[OutputPanel] handleExport called, filePath:', filePath)
+    if (!filePath) {
+      console.log('[OutputPanel] No filePath, returning')
+      return
+    }
 
     setExporting(true)
     setExportError(null)
     setExportSuccess(false)
 
     try {
+      console.log('[OutputPanel] Calling export_file with:', {
+        inputPath: filePath,
+        config: {
+          visible: config.visible,
+          invisible: config.invisible,
+          output: config.output,
+        },
+      })
       await invoke('export_file', {
         inputPath: filePath,
-        config,
+        config: {
+          visible: config.visible,
+          invisible: config.invisible,
+          output: config.output,
+        },
       })
+      console.log('[OutputPanel] export_file succeeded')
       setExportSuccess(true)
     } catch (err) {
+      console.error('[OutputPanel] export_file error:', err)
       setExportError(String(err))
     } finally {
       setExporting(false)

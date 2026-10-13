@@ -1,5 +1,6 @@
 pub mod config;
 pub mod font;
+#[cfg(target_os = "macos")]
 pub mod heic_io;
 pub mod image_loader;
 pub mod invisible_watermark;

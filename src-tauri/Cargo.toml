@@ -20,6 +20,7 @@ image = { version = "0.25", features = ["jpeg", "png", "gif", "webp"] }
 imageproc = "0.25"
 ab_glyph = "0.2"
 lopdf = "0.34"
+tokio = { version = "1", features = ["sync", "time", "macros"] }
 
 # 隐形水印载荷需要密码学哈希（感知哈希、密钥派生）与校验和。
 # 两者此前已作为传递依赖存在于依赖树中，此处提升为直接依赖，
@@ -28,12 +29,23 @@ sha2 = "0.10"
 crc32fast = "1"
 kamadak-exif = "0.6"
 img-parts = "0.3"
+percent-encoding = "2.3"
+
+[target.'cfg(target_os = "android")'.dependencies]
+jni = { version = "0.21", features = [] }
+ndk = "0.9"
+ndk-sys = "0.6"
+ndk-context = "0.1"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.5"
 objc2-foundation = { version = "0.2", features = ["NSString"] }
 core-foundation = "0.10"
 core-graphics = "0.24"
+
+[target.'cfg(target_os = "ios")'.dependencies]
+objc2 = { version = "0.5", features = [] }
+objc2-foundation = { version = "0.2", features = ["NSString"] }
 
 [profile.release]
 # 优化体积：分发用的二进制不该带着调试信息。
