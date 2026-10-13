@@ -11,3 +11,16 @@ src-tauri/assets/fonts/NotoSansCJKsc-Regular.otf
 
 # 打包产物（DMG 通常十几 MB，不入库）
 dist-packages
+
+# Tauri 生成的移动端项目（由 CLI 自动生成，不入库）
+src-tauri/gen/
+
+# 打包产物与缓存
+scorpion-watermark-signed.apk
+scorpion-watermark-signed.apk.idsig
+*.apk
+*.idsig
+
+# 备份配置文件
+src-tauri/tauri.android.conf.json.bak*
+src-tauri/tauri.ios.conf.json.bak*
