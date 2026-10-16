@@ -1,0 +1,264 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ─────────────────────────────────────────────
+  # macOS (Universal Binary → DMG)
+  # ─────────────────────────────────────────────
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (Universal Binary)
+        env:
+          PATH: /usr/bin:$PATH
+        run: |
+          npx tauri build --target universal-apple-darwin --bundles dmg,app
+          if [ $? -ne 0 ]; then
+            echo "Universal build failed, falling back to native arch..."
+            npx tauri build --bundles dmg,app
+          fi
+
+      - name: Collect artifacts
+        id: collect
+        run: |
+          set -euo pipefail
+          VER="$(python3 -c "import json;print(json.load(open('src-tauri/tauri.conf.json'))['version'])")"
+          DIST="dist-packages"
+          mkdir -p "$DIST"
+
+          # 优先找 universal 产物
+          DMG="$(find src-tauri/target -maxdepth 4 -path '*/bundle/dmg/*.dmg' | head -1)"
+          if [ -z "$DMG" ]; then
+            DMG="$(find src-tauri/target -maxdepth 4 -name '*.dmg' | head -1)"
+          fi
+          [ -f "$DMG" ] || { echo "ERROR: DMG not found"; exit 1; }
+
+          if echo "$DMG" | grep -q "universal"; then
+            OUT="$DIST/Scorpion-Watermark-${VER}-universal.dmg"
+          else
+            OUT="$DIST/Scorpion-Watermark-${VER}-$(uname -m).dmg"
+          fi
+          cp "$DMG" "$OUT"
+
+          # 同时保留 .app 供校验
+          APP="$(find src-tauri/target -maxdepth 4 -path '*/bundle/macos/*.app' -type d | head -1)"
+          if [ -n "$APP" ]; then
+            APPNAME="$(basename "$APP")"
+            tar -czf "$DIST/Scorpion-Watermark-${VER}-macOS.app.tar.gz" -C "$(dirname "$APP")" "$APPNAME"
+          fi
+
+          echo "dmg=$OUT" >> "$GITHUB_OUTPUT"
+          echo "=== Artifacts ==="
+          ls -lh "$DIST"
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist-packages/*.dmg
+            dist-packages/*.tar.gz
+          draft: false
+          prerelease: false
+
+  # ─────────────────────────────────────────────
+  # iOS (IPA)
+  # 需要 Secrets:
+  #   IOS_CERTIFICATE_P12   — .p12 证书 base64
+  #   IOS_CERTIFICATE_PASSWORD
+  #   IOS_PROVISIONING_PROFILE — .mobileprovision base64
+  #   IOS_BUNDLE_IDENTIFIER — 可选，默认 com.scorpion.watermark
+  # 未配置时跳过
+  # ─────────────────────────────────────────────
+  ios:
+    runs-on: macos-latest
+    needs: macos
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check iOS signing secrets
+        id: check
+        run: |
+          if [ -n "$IOS_CERTIFICATE_P12" ] && [ -n "$IOS_PROVISIONING_PROFILE" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "iOS signing secrets not configured, skipping iOS build"
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.check.outputs.enabled == 'true'
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        if: steps.check.outputs.enabled == 'true'
+        with:
+          targets: aarch64-apple-ios
+
+      - name: Install dependencies
+        if: steps.check.outputs.enabled == 'true'
+        run: npm ci
+
+      - name: Restore certificate & profile
+        if: steps.check.outputs.enabled == 'true'
+        run: |
+          mkdir -p ~/certs
+          echo "$IOS_CERTIFICATE_P12" | base64 --decode > ~/certs/cert.p12
+          echo "$IOS_PROVISIONING_PROFILE" | base64 --decode > ~/certs/profile.mobileprovision
+
+          # 导入证书到 Keychain
+          SECURITY_PATH=$(security find-generic-password -s "Tauri IOS" -w 2>/dev/null || echo "")
+          if [ -z "$SECURITY_PATH" ]; then
+            KEYCHAIN_PATH=$HOME/Library/Keychains/build.keychain-db
+            security create-keychain -p action-ios build.keychain-db
+            security default-keychain -d user -s build.keychain-db
+            security unlock-keychain -p action-ios build.keychain-db
+            security import ~/certs/cert.p12 -k build.keychain-db -P "$IOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+            security set-keychain-settings -t 3600 -u build.keychain-db
+            security find-identity -v -p codesigning
+          fi
+
+          # 放置 provisioning profile
+          UUID=$(security cms -D -i ~/certs/profile.mobileprovision | plutil -extract ProvisioningProfileUuid raw -)
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp ~/certs/profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
+
+      - name: Build iOS
+        if: steps.check.outputs.enabled == 'true'
+        env:
+          APPLE_CERTIFICATE: $IOS_CERTIFICATE_P12
+          APPLE_CERTIFICATE_PASSWORD: $IOS_CERTIFICATE_PASSWORD
+          APPLE_PROVISIONING_PROFILE_SPECIFIER: $IOS_BUNDLE_IDENTIFIER
+        run: |
+          npx tauri ios build --bundles app
+
+      - name: Collect IPA
+        if: steps.check.outputs.enabled == 'true'
+        id: collect
+        run: |
+          VER="$(python3 -c "import json;print(json.load(open('src-tauri/tauri.conf.json'))['version'])")"
+          DIST="dist-packages"
+          mkdir -p "$DIST"
+          IPA="$(find src-tauri/target -maxdepth 5 -name '*.ipa' | head -1)"
+          [ -f "$IPA" ] || { echo "ERROR: IPA not found"; exit 1; }
+          cp "$IPA" "$DIST/Scorpion-Watermark-${VER}-iOS.ipa"
+          ls -lh "$DIST"
+
+      - name: Upload to Release
+        if: steps.check.outputs.enabled == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist-packages/*.ipa
+          draft: false
+          prerelease: false
+
+  # ─────────────────────────────────────────────
+  # Android (APK + AAB)
+  # ─────────────────────────────────────────────
+  android:
+    runs-on: ubuntu-latest
+    needs: macos
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android,i686-linux-android
+
+      - name: Install JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Accept Android SDK licenses
+        run: |
+          yes | sdkmanager --licenses > /dev/null 2>&1 || true
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Android
+        env:
+          ANDROID_NDK_API_LEVEL: "24"
+        run: |
+          npx tauri android build
+
+      - name: Sign APK (debug key)
+        id: sign
+        run: |
+          set -euo pipefail
+          BUILD_TOOLS=$(ls -d $ANDROID_HOME/build-tools/*/ | sort -V | tail -1)
+          APK="src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk"
+          SIGNED="src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-signed.apk"
+
+          # 生成 debug keystore（CI 环境无用户 keystore）
+          KEYSTORE="$RUNNER_TEMP/release.keystore"
+          keytool -genkey -v -keystore "$KEYSTORE" \
+            -alias scorpion -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass android -keypass android \
+            -dname "CN=Scorpion Watermark, OU=Dev, O=Scorpion, L=Beijing, C=CN"
+
+          "$BUILD_TOOLS/apksigner" sign \
+            --ks "$KEYSTORE" --ks-pass pass:android --key-pass pass:android \
+            --out "$SIGNED" "$APK"
+
+          echo "signed=$SIGNED" >> "$GITHUB_OUTPUT"
+
+      - name: Collect artifacts
+        run: |
+          set -euo pipefail
+          VER="$(python3 -c "import json;print(json.load(open('src-tauri/tauri.conf.json'))['version'])")"
+          DIST="dist-packages"
+          mkdir -p "$DIST"
+
+          SIGNED_APK="src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-signed.apk"
+          cp "$SIGNED_APK" "$DIST/Scorpion-Watermark-${VER}-Android.apk"
+
+          AAB="src-tauri/gen/android/app/build/outputs/bundle/universalRelease/app-universal-release.aab"
+          if [ -f "$AAB" ]; then
+            cp "$AAB" "$DIST/Scorpion-Watermark-${VER}-Android.aab"
+          fi
+
+          echo "=== Artifacts ==="
+          ls -lh "$DIST"
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist-packages/*.apk
+            dist-packages/*.aab
+          draft: false
+          prerelease: false
