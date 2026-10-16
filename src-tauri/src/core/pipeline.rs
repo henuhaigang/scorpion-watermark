@@ -17,15 +17,22 @@ pub fn process_image(
     output_path: &str,
     config: &WatermarkConfig,
 ) -> Result<(), String> {
+    eprintln!("[process_image] START input: {}, output: {}", input_path, output_path);
     let mut image = load_image(input_path)?;
+    eprintln!("[process_image] load_image done");
 
+    eprintln!("[process_image] applying visible watermark");
     apply_visible_watermark(&mut image, &config.visible)?;
+    eprintln!("[process_image] visible watermark done");
 
     if let Some(ref invisible) = config.invisible {
+        eprintln!("[process_image] embedding invisible watermark");
         embed_invisible_watermark(&mut image, invisible)?;
+        eprintln!("[process_image] invisible watermark done");
     }
 
     let output_type = determine_output_type(input_path, &config.output.format)?;
+    eprintln!("[process_image] output_type: {:?}", output_type);
 
     if output_type == OutputImageType::Heic {
         #[cfg(target_os = "macos")]
@@ -44,17 +51,23 @@ pub fn process_image(
         OutputImageType::Png => ImageFormat::Png,
         OutputImageType::Heic => unreachable!(),
     };
+    eprintln!("[process_image] image_format: {:?}", image_format);
 
     let encoded = if config.output.strip_metadata {
+        eprintln!("[process_image] stripping metadata");
         strip_metadata(&mut image, image_format)?
     } else {
+        eprintln!("[process_image] encoding image");
         let mut buffer = Vec::new();
         image.write_to(&mut std::io::Cursor::new(&mut buffer), image_format)
             .map_err(|e| format!("Failed to encode image: {}", e))?;
         buffer
     };
+    eprintln!("[process_image] encoding done, encoded size: {} bytes", encoded.len());
 
+    eprintln!("[process_image] writing to file");
     std::fs::write(output_path, encoded).map_err(|e| format!("Failed to write output: {}", e))?;
+    eprintln!("[process_image] write done, file size: {}", std::fs::metadata(output_path).map(|m| m.len()).unwrap_or(0));
 
     Ok(())
 }

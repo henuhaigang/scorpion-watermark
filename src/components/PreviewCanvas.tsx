@@ -195,11 +195,7 @@ export default function PreviewCanvas({ filePath }: PreviewCanvasProps) {
   }, [layout, config.visible])
 
   if (!filePath) {
-    return (
-      <div style={{ color: '#999', fontSize: '16px', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
-        选择文件以预览
-      </div>
-    )
+    return null
   }
 
   if (loading) {
@@ -219,7 +215,7 @@ export default function PreviewCanvas({ filePath }: PreviewCanvasProps) {
   }
 
   return (
-    <div style={{ maxWidth: '100%', maxHeight: '100%' }}>
+    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
       <Stage width={stageSize.width} height={stageSize.height}>
         <Layer>
           {image && (

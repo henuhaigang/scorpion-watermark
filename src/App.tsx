@@ -72,45 +72,48 @@ const handleExport = async () => {
       })
       alert('导出成功！')
     } catch (err) {
-      alert('导出失败: ' + err)
-    }
+alert('导出失败: ' + err)
   }
+}
 
-  useEffect(() => {
-    const testIPC = async () => {
-      try {
-        const result = await invoke('test_ipc') as string
-        console.log('test_ipc result:', result)
-        alert('test_ipc: ' + result)
-      } catch (err) {
-        console.error('test_ipc error:', err)
-        alert('test_ipc error: ' + err)
-      }
-    }
-    testIPC()
-  }, [])
-
-  if (isMobile) {
+if (isMobile) {
     return (
       <div style={{ display: 'flex', height: '100vh', flexDirection: 'column', background: '#fafafa' }}>
-        {/* Fixed Header - stays at top */}
-        <header style={{
-          padding: '12px 16px',
-          background: 'rgba(255,255,255,0.95)',
-          backdropFilter: 'blur(10px)',
-          webkitBackdropFilter: 'blur(10px)',
-          borderBottom: '1px solid #e0e0e0',
-          position: 'sticky',
-          top: 0,
-          zIndex: 20,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}>
-          <h1 style={{ fontSize: '18px', fontWeight: 600, margin: 0, color: '#1a1a1a' }}>蝎子水印</h1>
-        </header>
 
-        {/* Main content area - scrollable between header and bottom bar */}
+        {/* Header with back button when file is selected */}
+        {filePath && (
+          <header style={{
+            padding: '12px 16px',
+            background: 'rgba(255,255,255,0.95)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            borderBottom: '1px solid #e0e0e0',
+            position: 'sticky',
+            top: 0,
+            zIndex: 20,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}>
+            <button
+              onClick={() => setFilePath(null)}
+              style={{
+                padding: '8px',
+                border: 'none',
+                background: 'transparent',
+                cursor: 'pointer',
+                color: '#4a90d9',
+                fontSize: '16px',
+                fontWeight: 500,
+              }}
+            >
+              返回
+            </button>
+            <div style={{ width: 60 }} />
+          </header>
+        )}
+
+        {/* Main content area */}
         <div style={{ 
           flex: 1, 
           position: 'relative', 
@@ -123,16 +126,16 @@ const handleExport = async () => {
           <div style={{ flex: 1, position: 'relative', minHeight: 0, overflow: 'hidden' }}>
             <PreviewCanvas filePath={filePath} />
             
-            {/* Watermark status badge - positioned above bottom bar */}
+            {/* Watermark status badge - positioned above action bar */}
             {filePath && (
               <div style={{
-                position: 'absolute',
-                bottom: 90,
+                position: 'fixed',
+                bottom: 'calc(100px + env(safe-area-inset-bottom))',
                 left: 16,
                 right: 16,
                 background: 'rgba(255,255,255,0.9)',
                 backdropFilter: 'blur(10px)',
-                webkitBackdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
                 borderRadius: '12px',
                 padding: '10px 14px',
                 display: 'flex',
@@ -140,6 +143,7 @@ const handleExport = async () => {
                 justifyContent: 'space-between',
                 boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
                 fontSize: '13px',
+                zIndex: 1001,
                 border: '1px solid rgba(0,0,0,0.05)'
               }}>
                 <span style={{ color: '#333' }}>
@@ -165,7 +169,7 @@ const handleExport = async () => {
             {/* Empty state - centered */}
             {!filePath && (
               <div style={{
-                position: 'absolute',
+                position: 'fixed',
                 inset: 0,
                 display: 'flex',
                 flexDirection: 'column',
@@ -190,12 +194,7 @@ const handleExport = async () => {
                     <polyline points="21 15 16 10 5 21" />
                   </svg>
                 </div>
-                <p style={{ color: '#666', fontSize: '16px', marginTop: 0, marginBottom: '8px', fontWeight: 500 }}>
-                  选择图片开始
-                </p>
-                <p style={{ color: '#999', fontSize: '13px', marginTop: 0, marginBottom: '24px', textAlign: 'center' }}>
-                  支持相册、拍照、文件选择
-                </p>
+                
                 <button
                   onClick={() => setShowSourceMenu(true)}
                   style={{
@@ -218,20 +217,23 @@ const handleExport = async () => {
             )}
           </div>
 
-          {/* Fixed bottom bar - always at bottom */}
+          {/* Action bar - positioned above bottom with margin */}
           <div style={{
-            position: 'sticky',
-            bottom: 0,
+            position: 'fixed',
+            bottom: 'calc(20px + env(safe-area-inset-bottom))',
+            left: 16,
+            right: 16,
             padding: '10px 16px',
-            paddingBottom: 'calc(10px + env(safe-area-inset-bottom))',
             background: 'rgba(255,255,255,0.95)',
             backdropFilter: 'blur(10px)',
-            webkitBackdropFilter: 'blur(10px)',
-            borderTop: '1px solid #e0e0e0',
+            WebkitBackdropFilter: 'blur(10px)',
+            borderRadius: '16px',
+            border: '1px solid #e0e0e0',
             display: 'flex',
             flexDirection: 'column',
             gap: '10px',
-            zIndex: 15,
+            zIndex: 1001,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
           }}>
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
@@ -301,25 +303,34 @@ const handleExport = async () => {
 
         {/* Source picker menu - frosted glass */}
         {showSourceMenu && (
-          <div
-            style={{
-              position: 'fixed',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              background: 'rgba(255,255,255,0.9)',
-              backdropFilter: 'blur(20px)',
-              webkitBackdropFilter: 'blur(20px)',
-              borderTopLeftRadius: '20px',
-              borderTopRightRadius: '20px',
-              padding: '16px',
-              paddingBottom: 'calc(16px + env(safe-area-inset-bottom))',
-              zIndex: 1000,
-              boxShadow: '0 -4px 32px rgba(0,0,0,0.12)',
-              borderTop: '1px solid rgba(255,255,255,0.3)',
-            }}
-            onClick={() => setShowSourceMenu(false)}
-          >
+          <>
+            <div
+              style={{
+                position: 'fixed',
+                inset: 0,
+                background: 'rgba(0,0,0,0.3)',
+                zIndex: 1002,
+              }}
+              onClick={() => setShowSourceMenu(false)}
+            />
+            <div
+              style={{
+                position: 'fixed',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                background: 'rgba(255,255,255,0.9)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                borderTopLeftRadius: '20px',
+                borderTopRightRadius: '20px',
+                padding: '16px',
+                paddingBottom: 'calc(16px + env(safe-area-inset-bottom))',
+                zIndex: 1003,
+                boxShadow: '0 -4px 32px rgba(0,0,0,0.12)',
+                borderTop: '1px solid rgba(255,255,255,0.3)',
+              }}
+            >
             <div style={{ 
               width: '40px', 
               height: '5px', 
@@ -409,7 +420,8 @@ const handleExport = async () => {
               </svg>
               从文件选择
             </button>
-          </div>
+            </div>
+          </>
         )}
       </div>
     )
@@ -417,10 +429,6 @@ const handleExport = async () => {
 
   return (
     <div style={{ display: 'flex', height: '100vh', flexDirection: 'column', background: '#fafafa' }}>
-      <header style={{ padding: '12px 24px', borderBottom: '1px solid #e0e0e0', background: '#fff' }}>
-        <h1 style={{ fontSize: '20px', fontWeight: 600, margin: 0 }}>蝎子水印</h1>
-      </header>
-
       <PresetBar />
 
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>

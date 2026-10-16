@@ -77,7 +77,7 @@ export default function SettingsBottomSheet({
           maxHeight: '65vh',
           background: 'rgba(255,255,255,0.9)',
           backdropFilter: 'blur(24px)',
-          webkitBackdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
           borderTopLeftRadius: '24px',
           borderTopRightRadius: '24px',
           zIndex: 101,
@@ -198,7 +198,7 @@ export default function SettingsBottomSheet({
           borderTop: '1px solid rgba(0,0,0,0.08)',
           background: 'rgba(255,255,255,0.9)',
           backdropFilter: 'blur(10px)',
-          webkitBackdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
           borderBottomLeftRadius: '20px',
           borderBottomRightRadius: '20px',
           display: 'flex',
@@ -419,14 +419,20 @@ function OutputSettingsPanel({
   const [exportSuccess, setExportSuccess] = useState(false)
 
   const handleExport = async () => {
-    if (!filePath) return
+    console.log('[handleExport] >>> Clicked, filePath:', filePath)
+    if (!filePath) {
+      console.log('[handleExport] No filePath, returning')
+      return
+    }
 
     setExporting(true)
     setExportError(null)
     setExportSuccess(false)
 
     try {
+      console.log('[handleExport] Importing invoke...')
       const { invoke } = await import('@tauri-apps/api/core')
+      console.log('[handleExport] Invoking export_file with:', { inputPath: filePath, visible: fullConfig.visible, invisible: fullConfig.invisible, output: fullConfig.output })
       await invoke('export_file', {
         inputPath: filePath,
         config: {
@@ -435,9 +441,10 @@ function OutputSettingsPanel({
           output: fullConfig.output,
         },
       })
+      console.log('[handleExport] export_file succeeded')
       setExportSuccess(true)
     } catch (err) {
-      console.error('[OutputSettingsPanel] export_file error:', err)
+      console.error('[handleExport] export_file error:', err)
       setExportError(String(err))
     } finally {
       setExporting(false)
