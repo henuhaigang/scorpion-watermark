@@ -31,14 +31,11 @@ jobs:
         run: npm ci
 
       - name: Build (Universal Binary)
-        env:
-          PATH: /usr/bin:$PATH
         run: |
-          npx tauri build --target universal-apple-darwin --bundles dmg,app
-          if [ $? -ne 0 ]; then
-            echo "Universal build failed, falling back to native arch..."
-            npx tauri build --bundles dmg,app
-          fi
+          export PATH="/usr/bin:/bin:$PATH"
+          npx tauri build --target universal-apple-darwin --bundles dmg,app || \
+          (echo "Universal build failed, falling back to native arch..." && \
+           npx tauri build --bundles dmg,app)
 
       - name: Collect artifacts
         id: collect
