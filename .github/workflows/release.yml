@@ -214,6 +214,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Init Android project
+        run: npx tauri android init
+
       - name: Build Android
         env:
           ANDROID_NDK_API_LEVEL: "24"
