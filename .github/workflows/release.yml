@@ -46,11 +46,11 @@ jobs:
           mkdir -p "$DIST"
 
           # 优先找 universal 产物
-          DMG="$(find src-tauri/target -maxdepth 4 -path '*/bundle/dmg/*.dmg' | head -1)"
+          DMG="$(find src-tauri/target -path '*/bundle/dmg/*.dmg' -name '*.dmg' 2>/dev/null | head -1)"
           if [ -z "$DMG" ]; then
-            DMG="$(find src-tauri/target -maxdepth 4 -name '*.dmg' | head -1)"
+            DMG="$(find src-tauri/target -name '*.dmg' 2>/dev/null | head -1)"
           fi
-          [ -f "$DMG" ] || { echo "ERROR: DMG not found"; exit 1; }
+          [ -f "$DMG" ] || { echo "ERROR: DMG not found"; find src-tauri/target -name '*.dmg' 2>/dev/null; ls -R src-tauri/target/*/release/bundle/ 2>/dev/null; exit 1; }
 
           if echo "$DMG" | grep -q "universal"; then
             OUT="$DIST/Scorpion-Watermark-${VER}-universal.dmg"
@@ -60,7 +60,7 @@ jobs:
           cp "$DMG" "$OUT"
 
           # 同时保留 .app 供校验
-          APP="$(find src-tauri/target -maxdepth 4 -path '*/bundle/macos/*.app' -type d | head -1)"
+          APP="$(find src-tauri/target -path '*/bundle/macos/*.app' -type d 2>/dev/null | head -1)"
           if [ -n "$APP" ]; then
             APPNAME="$(basename "$APP")"
             tar -czf "$DIST/Scorpion-Watermark-${VER}-macOS.app.tar.gz" -C "$(dirname "$APP")" "$APPNAME"
@@ -159,7 +159,7 @@ jobs:
           VER="$(python3 -c "import json;print(json.load(open('src-tauri/tauri.conf.json'))['version'])")"
           DIST="dist-packages"
           mkdir -p "$DIST"
-          IPA="$(find src-tauri/target -maxdepth 5 -name '*.ipa' | head -1)"
+          IPA="$(find src-tauri/target -name '*.ipa' 2>/dev/null | head -1)"
           [ -f "$IPA" ] || { echo "ERROR: IPA not found"; exit 1; }
           cp "$IPA" "$DIST/Scorpion-Watermark-${VER}-iOS.ipa"
           ls -lh "$DIST"
