@@ -1,4 +1,5 @@
 # Scorpion Watermark 蝎子水印
+<img width="2530" height="1596" alt="image" src="https://github.com/user-attachments/assets/f8136b33-c4e6-474a-a792-87ef709dba4f" />
 
 macOS / iOS / Android 跨平台水印工具。为图片添加斜向平铺的可见文字水印，导出时自动剥离 EXIF/GPS 等隐私元数据。
 
